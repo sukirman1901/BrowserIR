@@ -67,11 +67,12 @@ export function startDaemonPoller(restPort = 3081) {
   pollerStarted = true
 
   const check = async () => {
+    const targetHost = window.location.hostname === 'localhost' ? '127.0.0.1' : (window.location.hostname || '127.0.0.1')
     try {
-      const res = await fetch(`http://localhost:${restPort}/status`)
+      const res = await fetch(`http://${targetHost}:${restPort}/status`)
       if (res.ok) {
         const data = await res.json()
-        if (data && data.running) {
+        if (data && (typeof data.running === 'boolean' || data.engines !== undefined)) {
           wsConnected.set(true)
           return
         }
@@ -117,9 +118,10 @@ export async function getDaemonStatus(restPort = 3081): Promise<any> {
     } catch {}
   }
 
-  // 2. Fallback to REST API
+  // 2. Fallback to REST API via 127.0.0.1
+  const targetHost = window.location.hostname === 'localhost' ? '127.0.0.1' : (window.location.hostname || '127.0.0.1')
   try {
-    const res = await fetch(`http://localhost:${restPort}/status`)
+    const res = await fetch(`http://${targetHost}:${restPort}/status`)
     if (res.ok) {
       const data = await res.json()
       return data
