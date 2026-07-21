@@ -577,6 +577,25 @@ export class SemanticAnalyzer {
       paragraph: 'text',
       list: 'table',
       table: 'table',
+      dialog: 'dialog',
+      tooltip: 'tooltip',
+      accordion: 'accordion',
+      tab: 'tabs',
+      progress: 'progress',
+      meter: 'meter',
+      output: 'output',
+      details: 'details',
+      treeitem: 'text',
+      tree: 'table',
+      menu: 'dropdown',
+      menubar: 'dropdown',
+      menuitem: 'button',
+      toolbar: 'form',
+      status: 'text',
+      alert: 'text',
+      log: 'text',
+      marquee: 'text',
+      timer: 'text',
     }
     return mapping[role] || null
   }
@@ -590,6 +609,26 @@ export class SemanticAnalyzer {
       select: 'dropdown',
       img: 'image',
       table: 'table',
+      dialog: 'dialog',
+      details: 'details',
+      summary: 'text',
+      video: 'video',
+      audio: 'audio',
+      iframe: 'embed',
+      object: 'embed',
+      embed: 'embed',
+      canvas: 'image',
+      svg: 'image',
+      progress: 'progress',
+      meter: 'meter',
+      output: 'output',
+      form: 'form',
+      fieldset: 'fieldset',
+      legend: 'text',
+      label: 'label',
+      pre: 'pre',
+      code: 'code_block',
+      blockquote: 'text',
     }
     return mapping[tag.toLowerCase()] || null
   }
@@ -597,7 +636,7 @@ export class SemanticAnalyzer {
   private isInteractiveElement(node: DOMNode): boolean {
     const tag = node.tag.toLowerCase()
     return (
-      ['button', 'a', 'input', 'textarea', 'select'].includes(tag) ||
+      ['button', 'a', 'input', 'textarea', 'select', 'details', 'dialog', 'video', 'audio'].includes(tag) ||
       node.attributes['role'] !== undefined ||
       node.attributes['tabindex'] !== undefined
     )
