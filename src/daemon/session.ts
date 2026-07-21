@@ -78,56 +78,155 @@ export class BrowserSession {
     if (!match) throw new Error(`Invalid ref format: ${ref}`)
 
     const targetIndex = parseInt(match[1]) - 1
+    const components = await this.getInteractiveComponents()
+    if (targetIndex >= components.length) {
+      throw new Error(`Element ${ref} not found (only ${components.length} interactive elements)`)
+    }
+    const target = components[targetIndex]
 
-    // Try to find element using a11y snapshot for semantic matching
-    try {
-      if (typeof (this.page as any).accessibility?.snapshot === 'function') {
-        const snapshot = await (this.page as any).accessibility.snapshot({ interestingOnly: false })
-        if (snapshot) {
-          const interactive = this.collectInteractiveA11y(snapshot)
-          if (targetIndex < interactive.length) {
-            const target = interactive[targetIndex]
-            // Try to click by a11y role + name selector
-            const selector = `[role="${target.role}"][aria-label="${target.name}"]`
-            const el = await this.page.$(selector)
-            if (el) {
-              await el.click()
-              return
-            }
+    // Strategy 1: a11y role + aria-label selector
+    if (target.name && target.role) {
+      const selector = `[role="${target.role}"][aria-label="${CSS.escape(target.name)}"]`
+      try {
+        const el = await this.page.$(selector)
+        if (el) {
+          await el.click()
+          return
+        }
+      } catch {}
+    }
+
+    // Strategy 2: text content match
+    if (target.name) {
+      const clicked = await this.page.evaluate((name: string) => {
+        const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT)
+        while (walk.nextNode()) {
+          const el = walk.currentNode as HTMLElement
+          if (el.textContent?.trim() === name && typeof el.click === 'function') {
+            el.click()
+            return true
           }
         }
-      }
-    } catch {}
+        return false
+      }, target.name)
+      if (clicked) return
+    }
 
-    // Fallback: use DOM interactive elements
-    const clicked = await this.page.evaluate((idx) => {
-      const interactive = document.querySelectorAll(
-        'a, button, input, select, textarea, [role="button"], [role="link"], [role="tab"], [role="menuitem"]'
+    // Strategy 3: position-based fallback
+    if (target.backendDOMNodeId) {
+      try {
+        const cdp = await (this.page.context().browser() as any)?.newBrowserCDPSession?.()
+        if (cdp) {
+          const { result } = await cdp.send('DOM.resolveNode', {
+            backendNodeId: target.backendDOMNodeId,
+          })
+          if (result?.object?.objectId) {
+            await cdp.send('Runtime.callFunctionOn', {
+              objectId: result.object.objectId,
+              functionDeclaration: 'function() { this.click(); }',
+            })
+            await cdp.detach()
+            return
+          }
+          await cdp.detach()
+        }
+      } catch {}
+    }
+
+    // Final fallback: position from accessibility tree
+    if (target.x !== undefined && target.y !== undefined) {
+      await this.page.mouse.click(
+        target.x + (target.width ?? 0) / 2,
+        target.y + (target.height ?? 0) / 2
       )
-      const el = interactive[idx] as HTMLElement | undefined
-      if (el) {
-        el.click()
-        return true
-      }
-      return false
-    }, targetIndex)
+      return
+    }
 
-    if (!clicked) throw new Error(`Element ${ref} not found`)
+    throw new Error(`Element ${ref} not found (no strategy succeeded)`)
   }
 
-  private collectInteractiveA11y(node: any): Array<{ role: string; name: string }> {
-    const result: Array<{ role: string; name: string }> = []
-    const interactiveRoles = new Set(['button', 'link', 'textbox', 'combobox', 'checkbox', 'radio', 'switch', 'tab', 'menuitem'])
-    
-    if (node.role && interactiveRoles.has(node.role.toLowerCase())) {
-      result.push({ role: node.role, name: node.name || '' })
-    }
-    
-    for (const child of (node.children || [])) {
-      result.push(...this.collectInteractiveA11y(child))
-    }
-    
-    return result
+  async getInteractiveComponents(): Promise<
+    Array<{
+      role: string
+      name: string
+      backendDOMNodeId?: number
+      x?: number
+      y?: number
+      width?: number
+      height?: number
+    }>
+  > {
+    if (!this.page) throw new Error('Session not started')
+
+    const interactiveRoles = new Set([
+      'button', 'link', 'textbox', 'combobox', 'checkbox',
+      'radio', 'switch', 'tab', 'menuitem', 'menuitemcheckbox',
+      'menuitemradio', 'option', 'searchbox', 'spinbutton',
+      'slider', 'scrollbar', 'treeitem',
+    ])
+
+    const components: Array<{
+      role: string
+      name: string
+      backendDOMNodeId?: number
+      x?: number
+      y?: number
+      width?: number
+      height?: number
+    }> = []
+
+    try {
+      const browser = this.page.context().browser()
+      if (!browser) throw new Error('No browser')
+      const cdp = await (browser as any).newBrowserCDPSession()
+
+      // Enable accessibility domain
+      await cdp.send('Accessibility.enable')
+      const { nodes } = await cdp.send('Accessibility.getFullAXTree')
+
+      const resolvePromises: Promise<void>[] = []
+
+      for (const node of nodes) {
+        const role = node.role?.value
+        const name = node.name?.value
+        if (role && interactiveRoles.has(role)) {
+          const entry: {
+            role: string
+            name: string
+            backendDOMNodeId?: number
+            x?: number
+            y?: number
+            width?: number
+            height?: number
+          } = { role, name: name || '' }
+
+          if (node.backendDOMNodeId) {
+            entry.backendDOMNodeId = node.backendDOMNodeId
+          }
+
+          if (node.backendDOMNodeId) {
+            resolvePromises.push(
+              cdp.send('DOM.getBoxModel', { backendNodeId: node.backendDOMNodeId })
+                .then((res: any) => {
+                  const content = res.model.content
+                  entry.x = (content[0] + content[2]) / 2
+                  entry.y = (content[1] + content[5]) / 2
+                  entry.width = Math.abs(content[2] - content[0])
+                  entry.height = Math.abs(content[5] - content[1])
+                })
+                .catch(() => {})
+            )
+          }
+
+          components.push(entry)
+        }
+      }
+
+      await Promise.all(resolvePromises)
+      await cdp.detach()
+    } catch {}
+
+    return components
   }
 
   async screenshot(): Promise<string> {
