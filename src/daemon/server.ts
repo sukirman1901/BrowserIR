@@ -42,7 +42,8 @@ const handler: RPCHandler = async (
 
       // Initialize engines on first start
       if (!state.db) {
-        state.db = await createDatabase(':memory:')
+        const dbPath = process.env.BIR_DB_PATH || 'data/bir.db'
+        state.db = await createDatabase(dbPath)
         state.engines = new EngineManager(state.db)
       }
 
