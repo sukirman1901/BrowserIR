@@ -5,28 +5,44 @@ export const wsConnected = writable(false)
 export const wsEvents = writable<any[]>([])
 
 let ws: WebSocket | null = null
+let currentHostIndex = 0
 
 export function connect(port = 3080) {
   if (!browser) return
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return
 
-  // Connect via 127.0.0.1 to avoid macOS localhost IPv6 resolution issues
-  const targetHost = window.location.hostname === 'localhost' ? '127.0.0.1' : (window.location.hostname || '127.0.0.1')
+  const candidateHosts = [
+    window.location.hostname || 'localhost',
+    '127.0.0.1',
+    'localhost',
+  ]
+  const targetHost = candidateHosts[currentHostIndex % candidateHosts.length]
 
   try {
-    ws = new WebSocket(`ws://${targetHost}:${port}`)
-    ws.onopen = () => {
+    const socket = new WebSocket(`ws://${targetHost}:${port}`)
+    ws = socket
+
+    socket.onopen = () => {
       wsConnected.set(true)
+      currentHostIndex = 0
     }
-    ws.onclose = () => {
+
+    socket.onclose = () => {
       wsConnected.set(false)
-      ws = null
+      if (ws === socket) ws = null
+      currentHostIndex++
       setTimeout(() => connect(port), 2000)
     }
-    ws.onerror = () => {
+
+    socket.onerror = () => {
       wsConnected.set(false)
+      if (ws === socket) {
+        try { socket.close() } catch {}
+        ws = null
+      }
     }
-    ws.onmessage = (e) => {
+
+    socket.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data)
         if (msg.type === 'event') {
@@ -37,8 +53,38 @@ export function connect(port = 3080) {
   } catch {
     wsConnected.set(false)
     ws = null
+    currentHostIndex++
     setTimeout(() => connect(port), 2000)
   }
+
+  // Start background REST poller to guarantee daemon connectivity status
+  startDaemonPoller()
+}
+
+let pollerStarted = false
+export function startDaemonPoller(restPort = 3081) {
+  if (!browser || pollerStarted) return
+  pollerStarted = true
+
+  const check = async () => {
+    try {
+      const res = await fetch(`http://localhost:${restPort}/status`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data && data.running) {
+          wsConnected.set(true)
+          return
+        }
+      }
+    } catch {}
+
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      wsConnected.set(false)
+    }
+  }
+
+  check()
+  setInterval(check, 3000)
 }
 
 export function sendRpc(method: string, params: any = {}): Promise<any> {
@@ -82,3 +128,4 @@ export async function getDaemonStatus(restPort = 3081): Promise<any> {
 
   return { error: 'Daemon not available' }
 }
+
