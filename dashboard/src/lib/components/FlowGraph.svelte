@@ -1,10 +1,13 @@
-<script>
-  let { flows = [] } = $props()
+<script lang="ts">
+  let { flows = [] } = $props<{ flows?: any[] }>()
 </script>
 
 <div class="flow-graph">
   {#if flows.length === 0}
-    <div class="empty">No flows detected yet.</div>
+    <div class="empty">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/></svg>
+      <p>No user flows detected yet. Interact with pages to capture multi-step flows.</p>
+    </div>
   {:else}
     {#each flows as flow}
       <div class="flow-card">
@@ -37,47 +40,51 @@
   .flow-card {
     background: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
   }
 
   .flow-card h3 {
-    font-size: 1rem;
-    margin-bottom: 0.75rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.85rem;
+    color: var(--text);
   }
 
   .steps {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-bottom: 0.75rem;
+    gap: 6px;
+    margin-bottom: 0.85rem;
   }
 
   .step {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.35rem 0.5rem;
-    background: var(--bg);
-    border-radius: 4px;
-    font-size: 0.85rem;
+    gap: 0.65rem;
+    padding: 0.45rem 0.75rem;
+    background: var(--bg-muted);
+    border-radius: 6px;
+    font-size: 0.875rem;
   }
 
   .step-num {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     background: var(--accent);
-    color: var(--bg);
+    color: #ffffff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 0.725rem;
     font-weight: 700;
   }
 
   .step-action {
-    font-weight: 500;
+    font-weight: 600;
+    color: var(--text);
   }
 
   .step-target {
@@ -88,14 +95,22 @@
 
   .meta {
     display: flex;
-    gap: 1rem;
-    font-size: 0.75rem;
+    gap: 1.25rem;
+    font-size: 0.775rem;
+    font-weight: 600;
     color: var(--text-muted);
   }
 
   .empty {
-    padding: 3rem;
+    padding: 4rem 2rem;
     text-align: center;
     color: var(--text-muted);
+    background: var(--bg-surface);
+    border: 1px dashed var(--border-strong);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
   }
 </style>

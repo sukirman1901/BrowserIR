@@ -37,32 +37,39 @@
 
 <div class="planner-page">
   <div class="header">
-    <h2>Plan Editor</h2>
+    <div>
+      <h2>Plan Editor</h2>
+      <p class="subtitle-text">Autonomous execution planner for multi-step goals</p>
+    </div>
   </div>
 
   <div class="create-form">
-    <h3>Create New Plan</h3>
+    <h3>Create New Autonomous Plan</h3>
     <div class="form-row">
       <input
         type="text"
-        placeholder="Goal (e.g., Login to GitHub)"
+        placeholder="Goal (e.g., Search product & add to cart)"
         bind:value={goal}
       />
       <input
         type="text"
-        placeholder="Domain (e.g., github.com)"
+        placeholder="Domain (e.g., example.com)"
         bind:value={domain}
       />
       <button onclick={createPlan} disabled={creating || !goal || !domain}>
-        {creating ? 'Creating...' : 'Create Plan'}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+        <span>{creating ? 'Creating...' : 'Create Plan'}</span>
       </button>
     </div>
   </div>
 
   <div class="plans-list">
-    <h3>Plans</h3>
+    <h3>Execution Plans</h3>
     {#if plans.length === 0}
-      <div class="empty">No plans yet. Create one above.</div>
+      <div class="empty-card">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
+        <p>No plans created yet. Enter a goal and domain above to generate a plan.</p>
+      </div>
     {:else}
       {#each plans as plan}
         <div class="plan-card">
@@ -72,7 +79,7 @@
             </span>
             <span class="plan-goal">{plan.goal}</span>
             <button onclick={() => executePlan(plan.id)} disabled={loading}>
-              Execute
+              Execute Plan
             </button>
           </div>
           {#if plan.steps}
@@ -80,7 +87,7 @@
               {#each plan.steps as step, i}
                 <div class="step">
                   <span class="step-num">{i + 1}</span>
-                  <span>{step.action}</span>
+                  <span class="step-action">{step.action}</span>
                   <span class="step-target">{step.target || ''}</span>
                 </div>
               {/each}
@@ -94,50 +101,73 @@
 
 <style>
   .header {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
   }
 
   .header h2 {
     font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .subtitle-text {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
   }
 
   .create-form {
     background: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.75rem;
+    box-shadow: var(--shadow-sm);
   }
 
   .create-form h3 {
-    margin-bottom: 0.75rem;
-    font-size: 1rem;
+    margin-bottom: 0.85rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
   }
 
   .form-row {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    flex-wrap: wrap;
   }
 
   .form-row input {
     flex: 1;
-    padding: 0.5rem 0.75rem;
+    min-width: 200px;
+    padding: 0.6rem 0.85rem;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     color: var(--text);
     font-size: 0.9rem;
   }
 
   .form-row button {
-    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.15rem;
     background: var(--accent);
-    color: var(--bg);
+    color: #ffffff;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 0.9rem;
     white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+    transition: background 0.15s ease;
+  }
+
+  .form-row button:hover:not(:disabled) {
+    background: var(--accent-hover);
   }
 
   .form-row button:disabled {
@@ -146,51 +176,60 @@
   }
 
   .plans-list h3 {
-    margin-bottom: 0.75rem;
-    font-size: 1rem;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
   }
 
   .plan-card {
     background: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
   }
 
   .plan-header {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.85rem;
+    flex-wrap: wrap;
   }
 
   .plan-status {
-    padding: 0.15rem 0.5rem;
-    background: var(--accent-yellow);
-    color: var(--bg);
-    border-radius: 3px;
-    font-size: 0.7rem;
-    font-weight: 600;
+    padding: 0.25rem 0.65rem;
+    background: var(--accent-yellow-bg);
+    color: var(--accent-yellow);
+    border-radius: 6px;
+    font-size: 0.725rem;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .plan-status.completed {
-    background: var(--accent-green);
+    background: var(--accent-green-bg);
+    color: var(--accent-green);
   }
 
   .plan-goal {
     flex: 1;
-    font-weight: 500;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
   }
 
   .plan-header button {
-    padding: 0.3rem 0.6rem;
+    padding: 0.45rem 0.85rem;
     background: var(--accent);
-    color: var(--bg);
+    color: #ffffff;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
   }
 
   .plan-header button:disabled {
@@ -198,33 +237,38 @@
   }
 
   .steps {
-    margin-top: 0.75rem;
+    margin-top: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
   }
 
   .step {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.35rem 0.5rem;
-    background: var(--bg);
-    border-radius: 4px;
-    font-size: 0.85rem;
+    gap: 0.65rem;
+    padding: 0.45rem 0.75rem;
+    background: var(--bg-muted);
+    border-radius: 6px;
+    font-size: 0.875rem;
   }
 
   .step-num {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     background: var(--accent);
-    color: var(--bg);
+    color: #ffffff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 0.725rem;
     font-weight: 700;
+  }
+
+  .step-action {
+    font-weight: 600;
+    color: var(--text);
   }
 
   .step-target {
@@ -233,12 +277,16 @@
     font-size: 0.8rem;
   }
 
-  .empty {
-    padding: 2rem;
+  .empty-card {
+    padding: 4rem 2rem;
     text-align: center;
     color: var(--text-muted);
     background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
   }
 </style>
