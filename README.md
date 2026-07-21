@@ -145,6 +145,11 @@ When the daemon is running:
 - 🍪 **Cookie/Storage Management**: Setup and verify app state (cookies, localStorage).
 - 🔦 **Element Highlight**: Visual debugging with colored outlines.
 - 🔄 **Failure Analysis Loop**: Test → fail → debug (network/console/errors) → fix → retest.
+- 🔒 **Security Manager**: Domain allowlisting, offline mode, headers, credentials.
+- ⌨️ **Input Manager**: Mouse, keyboard, dialog handling, frame switching.
+- 📁 **File Manager**: Download, upload, PDF export.
+- 💾 **Session Manager**: Idle timeout, auto-save, state expiration, encryption.
+- 📊 **Dashboard**: Real-time semantic analysis monitoring (port 4848).
 
 ---
 

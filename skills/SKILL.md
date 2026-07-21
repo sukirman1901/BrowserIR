@@ -39,6 +39,11 @@ BrowserIR compiles web pages into **semantic intermediate representations (IR)**
 13. **Cookie/Storage Management** — Setup and verify app state
 14. **Element Highlight** — Visual debugging with colored outlines
 15. **Failure Analysis Loop** — Test → fail → debug → fix → retest
+16. **Security Manager** — Domain allowlisting, offline mode, headers, credentials
+17. **Input Manager** — Mouse, keyboard, dialog handling, frame switching
+18. **File Manager** — Download, upload, PDF export
+19. **Session Manager** — Idle timeout, auto-save, state expiration, encryption
+20. **Dashboard** — Real-time semantic analysis monitoring (port 4848)
 
 ---
 

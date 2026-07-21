@@ -230,6 +230,9 @@ BrowserIR explains WHY it thinks something is what it is:
 - Network debugging
 - Failure analysis
 - Console error tracking
+- Security analysis
+- File operations (download/upload)
+- Session management
 
 ### Codex / Pi.dev
 - Quick page queries
