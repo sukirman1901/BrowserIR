@@ -11,10 +11,49 @@ export interface MemoryEntry {
   domain: string
   irHash: string
   knowledge: WebsiteKnowledge
+  patterns: PatternHistory[]
+  selectors: SelectorHistory[]
+  flows: FlowHistory[]
+  errors: ErrorHistory[]
+  performance: PerformanceHistory[]
   confidence: number
   visitCount: number
   lastVisit: number
   firstVisit: number
+}
+
+export interface PatternHistory {
+  type: string
+  pattern: string
+  frequency: number
+  lastSeen: number
+}
+
+export interface SelectorHistory {
+  selector: string
+  successRate: number
+  usageCount: number
+  lastUsed: number
+}
+
+export interface FlowHistory {
+  name: string
+  steps: string[]
+  successRate: number
+  lastSeen: number
+}
+
+export interface ErrorHistory {
+  type: string
+  message: string
+  count: number
+  lastSeen: number
+}
+
+export interface PerformanceHistory {
+  metric: string
+  value: number
+  timestamp: number
 }
 
 export interface MemoryStats {
@@ -42,8 +81,8 @@ export class MemoryEngine {
   constructor(private db: Database.Database) {
     this.stmts = {
       insert: db.prepare(`
-        INSERT INTO knowledge (id, domain, url_pattern, knowledge, confidence, visit_count, last_visit, first_visit)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO knowledge (id, domain, url_pattern, knowledge, ir_hash, patterns, selectors, flows, errors, performance, confidence, visit_count, last_visit, first_visit)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `),
       getByHash: db.prepare('SELECT * FROM knowledge WHERE url_pattern = ?'),
       getById: db.prepare('SELECT * FROM knowledge WHERE id = ?'),
@@ -87,8 +126,8 @@ export class MemoryEngine {
       issues: []
     }
 
-    this.stmts.insert.run(id, domain, url, JSON.stringify(knowledge), 0.5, 1, now, now)
-    return { id, url, domain, irHash, knowledge, confidence: 0.5, visitCount: 1, lastVisit: now, firstVisit: now }
+    this.stmts.insert.run(id, domain, url, JSON.stringify(knowledge), irHash, '[]', '[]', '[]', '[]', '[]', 0.5, 1, now, now)
+    return { id, url, domain, irHash, knowledge, patterns: [], selectors: [], flows: [], errors: [], performance: [], confidence: 0.5, visitCount: 1, lastVisit: now, firstVisit: now }
   }
 
   async recall(url: string): Promise<MemoryEntry | null> {
@@ -148,8 +187,13 @@ export class MemoryEngine {
       id: row.id,
       url: row.url_pattern,
       domain: row.domain,
-      irHash: '',
+      irHash: row.ir_hash || '',
       knowledge: JSON.parse(row.knowledge),
+      patterns: JSON.parse(row.patterns || '[]'),
+      selectors: JSON.parse(row.selectors || '[]'),
+      flows: JSON.parse(row.flows || '[]'),
+      errors: JSON.parse(row.errors || '[]'),
+      performance: JSON.parse(row.performance || '[]'),
       confidence: row.confidence,
       visitCount: row.visit_count,
       lastVisit: row.last_visit,
