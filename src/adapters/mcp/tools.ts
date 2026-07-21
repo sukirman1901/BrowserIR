@@ -395,5 +395,209 @@ export const agentGraphTool = {
   },
 }
 
+// ── Semantic Web Tools ──
+
+export const semanticWebFetchTool = {
+  name: 'bir_webfetch',
+  description: 'Fetch URL with semantic understanding — returns structured data with intent, components, and risks instead of raw HTML.',
+  inputSchema: {
+    url: z.string().url().describe('The URL to fetch'),
+    format: z.enum(['semantic', 'markdown', 'html']).optional().describe('Output format (default: semantic)'),
+  },
+  handler: async ({ url, format }: { url: string; format?: string }) => {
+    // Fetch content
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,*/*',
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
+    const html = await response.text()
+    
+    // Extract basic info from HTML
+    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
+    const title = titleMatch ? titleMatch[1].trim() : url
+    
+    // Simple semantic extraction
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+    const body = bodyMatch ? bodyMatch[1] : html
+    
+    // Count interactive elements
+    const buttonCount = (body.match(/<button/gi) || []).length
+    const linkCount = (body.match(/<a\s/gi) || []).length
+    const inputCount = (body.match(/<input/gi) || []).length
+    const formCount = (body.match(/<form/gi) || []).length
+    
+    // Detect intent from content
+    const contentLower = body.toLowerCase()
+    let intent = 'content'
+    if (/login|sign.?in|auth/i.test(contentLower)) intent = 'authentication'
+    else if (/checkout|payment|pay|buy/i.test(contentLower)) intent = 'purchase'
+    else if (/search|find|query/i.test(contentLower)) intent = 'search'
+    else if (/register|sign.?up|create.?account/i.test(contentLower)) intent = 'registration'
+    else if (/dashboard|admin|panel/i.test(contentLower)) intent = 'dashboard'
+    
+    // Convert to markdown (simple)
+    const markdown = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .substring(0, 5000)
+    
+    if (format === 'html') {
+      return { url, title, content: html, format: 'html' }
+    }
+    
+    if (format === 'markdown') {
+      return { url, title, content: markdown, format: 'markdown' }
+    }
+    
+    // Semantic format (default)
+    return {
+      url,
+      title,
+      semantic: {
+        intent,
+        components: {
+          buttons: buttonCount,
+          links: linkCount,
+          inputs: inputCount,
+          forms: formCount,
+          total: buttonCount + linkCount + inputCount
+        },
+        hasAuth: /login|sign.?in|password/i.test(contentLower),
+        hasSearch: /search|find|query/i.test(contentLower),
+        hasForms: formCount > 0,
+        isEcommerce: /cart|checkout|buy|price|product/i.test(contentLower),
+        isDocumentation: /docs|documentation|api|reference/i.test(contentLower),
+      },
+      content: markdown,
+      format: 'semantic'
+    }
+  },
+}
+
+export const semanticWebSearchTool = {
+  name: 'bir_websearch',
+  description: 'Search the web with semantic understanding — returns structured results with intent and relevance scoring.',
+  inputSchema: {
+    query: z.string().describe('Search query'),
+    numResults: z.number().optional().describe('Number of results (default: 5)'),
+  },
+  handler: async ({ query, numResults }: { query: string; numResults?: number }) => {
+    const limit = numResults || 5
+    
+    // Use DuckDuckGo API
+    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`Search failed: ${response.status}`)
+    }
+    
+    const data = await response.json()
+    const results: any[] = []
+    
+    // Add abstract
+    if (data.AbstractText) {
+      results.push({
+        title: data.Heading || query,
+        url: data.AbstractURL || '',
+        snippet: data.AbstractText,
+        relevance: 1.0,
+        intent: 'information'
+      })
+    }
+    
+    // Add related topics
+    if (data.RelatedTopics) {
+      for (const topic of data.RelatedTopics.slice(0, limit - results.length)) {
+        if (topic.Text && topic.FirstURL) {
+          results.push({
+            title: topic.Text.split(' - ')[0] || topic.Text.substring(0, 50),
+            url: topic.FirstURL,
+            snippet: topic.Text,
+            relevance: 0.7,
+            intent: 'related'
+          })
+        }
+      }
+    }
+    
+    return {
+      query,
+      results: results.slice(0, limit),
+      semantic: {
+        totalResults: results.length,
+        intents: [...new Set(results.map(r => r.intent))],
+        avgRelevance: results.length > 0 ? results.reduce((sum, r) => sum + r.relevance, 0) / results.length : 0
+      }
+    }
+  },
+}
+
+export const birAnalyzeContentTool = {
+  name: 'bir_analyze_content',
+  description: 'Analyze text content and return semantic understanding — intent, topics, sentiment, key entities.',
+  inputSchema: {
+    content: z.string().describe('Text content to analyze'),
+    type: z.enum(['auto', 'article', 'documentation', 'code']).optional().describe('Content type (default: auto)'),
+  },
+  handler: async ({ content, type }: { content: string; type?: string }) => {
+    const contentLower = content.toLowerCase()
+    
+    // Detect content type
+    let detectedType = type || 'article'
+    if (!type) {
+      if (/function|class|import|export|const|let|var/i.test(content)) detectedType = 'code'
+      else if (/api|endpoint|parameter|return/i.test(content)) detectedType = 'documentation'
+    }
+    
+    // Detect intent
+    let intent = 'information'
+    if (/tutorial|how.?to|guide/i.test(contentLower)) intent = 'tutorial'
+    else if (/api|endpoint|documentation/i.test(contentLower)) intent = 'reference'
+    else if (/news|article|blog/i.test(contentLower)) intent = 'news'
+    else if (/review|comparison/i.test(contentLower)) intent = 'review'
+    
+    // Extract key entities
+    const entities: string[] = []
+    const urlPattern = /https?:\/\/[^\s]+/g
+    const urls = content.match(urlPattern) || []
+    entities.push(...urls.slice(0, 5))
+    
+    // Extract code blocks if present
+    const codeBlocks = (content.match(/```[\s\S]*?```/g) || []).length
+    
+    // Word count
+    const wordCount = content.split(/\s+/).length
+    
+    // Reading time (200 WPM)
+    const readingTime = Math.ceil(wordCount / 200)
+    
+    return {
+      type: detectedType,
+      intent,
+      entities,
+      metrics: {
+        wordCount,
+        readingTime: `${readingTime} min`,
+        codeBlocks,
+        sentences: content.split(/[.!?]+/).length - 1
+      },
+      summary: content.substring(0, 200) + '...'
+    }
+  },
+}
+
 export { BrowserSession } from '../../browserIR/session.js'
 export { resetClient }

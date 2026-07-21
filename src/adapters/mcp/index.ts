@@ -15,6 +15,7 @@ import {
   multiCreateSessionTool, multiExecuteTool, multiSessionsTool,
   agentRegisterTool, agentUnregisterTool, agentClaimTool, agentGraphTool,
   analyzeTool,
+  semanticWebFetchTool, semanticWebSearchTool, birAnalyzeContentTool,
 } from './tools.js'
 
 async function main() {
@@ -88,9 +89,14 @@ async function main() {
   reg(agentClaimTool)
   reg(agentGraphTool)
 
+  // Semantic Web Tools
+  reg(semanticWebFetchTool)
+  reg(semanticWebSearchTool)
+  reg(birAnalyzeContentTool)
+
   const transport = new StdioServerTransport()
   await server.connect(transport)
-  console.error('BrowserIR MCP server running on stdio (30 tools)')
+  console.error('BrowserIR MCP server running on stdio (33 tools)')
 }
 
 main().catch((err) => {
