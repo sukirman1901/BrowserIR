@@ -1,112 +1,139 @@
-# BrowserIR
+# BrowserIR (Browser Intelligence Runtime)
 
-Semantic browser understanding engine for AI agents.
+> Semantic browser understanding engine for AI agents. Compiles web pages into typed, structured intermediate representations (IR) that AI can reason about.
 
-[![CI](https://github.com/browserir/browserir/actions/workflows/ci.yml/badge.svg)](https://github.com/browserir/browserir/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## What is BrowserIR?
+---
 
-BrowserIR compiles web pages into **semantic intermediate representations (IR)** — typed structures that AI can reason about.
+## 💡 Why BrowserIR?
 
-Unlike browser automation tools (Playwright, Puppeteer) that control browsers, BrowserIR **understands** pages:
+Traditional browser automation tools (Playwright, Puppeteer, Selenium) operate at the **DOM level** — making them fragile and expensive for AI agents. **BrowserIR understands pages at the semantic level.**
 
-```
-Raw HTML → BrowserIR → Semantic Tree (sections, components, intent, flow, risk)
-```
+| Feature | Playwright / Puppeteer | BrowserIR |
+| :--- | :--- | :--- |
+| **Perspective** | Raw HTML / CSS Selectors | Typed Semantic Tree (Intent, Sections, Components) |
+| **Token Cost** | Thousands of HTML tokens per step | 70% fewer tokens with clean IR |
+| **UI Resiliency** | Breaks when CSS classes change | Deterministic refs (`@e1`, `@e2`) + Self-Healing |
+| **Risk Detection** | None | Automatic warning on destructive/credential actions |
+| **AI Integration** | Requires custom wrapper | Native **29 MCP Tools** for Claude, Cursor, OpenCode |
 
-## Installation
+---
+
+## ⚡ Quick Start
+
+### 1. Installation
 
 ```bash
 npm install @browserir/core
 ```
 
-## Quick Start
-
-### Start daemon
+### 2. Start Daemon
 
 ```bash
-bir daemon start
+node dist/daemon/server.js
+# or: bir daemon start
 ```
 
-### Explain a page
+### 3. Analyze any web page via CLI
 
 ```bash
 bir explain https://example.com
 ```
 
-### MCP Tools (29 tools)
+**Output:**
+```yaml
+Semantic Analysis Complete
+
+Page: Example Domain
+URL: https://example.com/
+Intent: content_consumption (navigation)
+
+Components:
+  [content] Main Content
+    - More information (link) [@e1]
+
+Metadata:
+  A11y Tree: yes
+  React Fiber: no
+  DOM Size: 12 nodes
+```
+
+---
+
+## 🛠️ Usage Modes
+
+### Mode 1: MCP Server (for AI Assistants / LLMs)
+Add BrowserIR to your MCP config (`claude_desktop_config.json`, Cursor, OpenCode, Antigravity):
 
 ```json
 {
   "mcpServers": {
     "bir": {
       "command": "node",
-      "args": ["dist/adapters/mcp/index.js"]
+      "args": ["/path/to/BrowserIR/dist/adapters/mcp/index.js"]
     }
   }
 }
 ```
 
-## Features
+#### Core MCP Tools (29 Tools Total):
+- `bir_explain` — Analyze web page and return BrowserIR
+- `bir_click` — Click element by ref (e.g. `@e3`)
+- `bir_navigate` — Navigate to URL
+- `bir_screenshot` — Capture screenshot
+- `bir_diff_compare` — Compare two BrowserIR snapshots semantically
+- `bir_flow_detect` — Detect multi-step processes (checkout, registration)
+- `bir_memory_recall` & `bir_memory_store` — Remember domain patterns
+- `bir_heal_find` — Automatically fix broken CSS selectors
 
-- **Semantic Analysis** — Understands page purpose, not just DOM
-- **Intent Recognition** — Classifies page type (auth, purchase, search, etc.)
-- **Risk Assessment** — Warns about destructive actions
-- **Flow Detection** — Identifies multi-step processes
-- **Memory System** — Learns from past interactions
-- **Self-Healing** — Automatically fixes broken selectors
-- **Multi-Browser** — Coordinates multiple tabs/sessions
-- **Agent Coordination** — Multiple AI agents can work together
+### Mode 2: TypeScript / Node.js SDK
 
-## Documentation
+```typescript
+import { BrowserSession, explain, analyze } from '@browserir/core'
 
-- [AGENTS.md](AGENTS.md) — AI agent guide
-- [API Reference](docs/api/README.md) — REST API documentation
-- [OpenAPI Spec](docs/api/openapi.yaml) — OpenAPI 3.0 specification
+// Quick analysis
+const ir = await explain('https://example.com')
+console.log('Intent:', ir.page.intent.primary)
 
-## Configuration
+// Interactive session
+const session = await analyze('https://example.com')
+console.log(await session.graph())
 
-BrowserIR can be configured via environment variables or config file.
+await session.click('@e1')
+```
 
-### Environment Variables
+### Mode 3: CLI Commands Cheat Sheet
 
 ```bash
-BIR_WS_PORT=3080
-BIR_REST_PORT=3081
-BIR_DB_PATH=:memory:
-BIR_API_KEY=your-api-key
-BIR_LOG_LEVEL=info
+bir explain <url>              # Get semantic IR of a page
+bir click <ref>                # Click element by ref (e.g. @e3)
+bir screenshot                 # Take screenshot
+bir graph <url>                # Show page structure as tree
+bir diff <v1.json> <v2.json>   # Compare 2 IR snapshots
+bir memory recall <domain>     # Recall stored domain knowledge
+bir status                     # Check daemon status
 ```
 
-### Config File
+### Mode 4: REST API & WebSockets
 
-```json
-{
-  "wsPort": 3080,
-  "restPort": 3081,
-  "dbPath": "./data/bir.db",
-  "apiKey": null,
-  "logLevel": "info"
-}
-```
+When the daemon is running:
+- **REST API**: `http://localhost:3081` (e.g. `POST /navigate`, `GET /explain`)
+- **WebSocket**: `ws://localhost:3080` (Real-time event feed)
 
-## Development
+---
 
-```bash
-# Install dependencies
-npm install
+## 🌟 Key Features
 
-# Run tests
-npm test
+- 🧠 **Semantic Analysis**: Classifies page intent (`authentication`, `purchase`, `search`, etc.).
+- 🏷️ **Deterministic Refs (`@e1`, `@e2`)**: Click elements without fragile CSS selectors.
+- 🩹 **Self-Healing Selectors**: Automatically repairs broken selectors based on semantic intent.
+- 💾 **Domain Memory**: Learns domain patterns and stores them in SQLite.
+- 👥 **Multi-Agent & Multi-Tab**: Coordinate multiple AI agents on the same page.
+- ⚠ **Risk Assessment**: Warns before performing irreversible or sensitive actions.
 
-# Build
-npm run build
+---
 
-# Type check
-npm run typecheck
-```
+## 📄 License
 
-## License
-
-MIT
+MIT © [BrowserIR](https://github.com/sukirman1901/BrowserIR)
