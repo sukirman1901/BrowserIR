@@ -47,12 +47,13 @@ BrowserIR compiles web pages into **semantic intermediate representations (IR)**
 
 ---
 
-## Available MCP Tools (29 tools)
+## Available MCP Tools (30 tools)
 
 ### Core Navigation & Analysis
 - `bir_navigate({ url })` — Navigate to URL in browser
 - `bir_explain({ url })` — Analyze page and return semantic BrowserIR
-- `bir_click({ ref })` — Click element by ref (`@e1`, `@e2`, ...)
+- `bir_analyze({ url })` — Create a BrowserSession for analysis and interaction
+- `bir_click({ ref })` — Click element by ref (`@e1`, `@e2`, ...) with self-healing
 - `bir_screenshot({})` — Take screenshot of current page
 - `bir_graph({ url })` — Get page structure as tree graph
 - `bir_tabs({})` — List all open browser tabs
