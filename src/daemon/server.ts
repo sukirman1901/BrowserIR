@@ -6,6 +6,7 @@ import type { BrowserIR } from '../ir/types.js'
 import { EngineManager } from './engines.js'
 import { createDatabase } from '../db/index.js'
 import type Database from 'better-sqlite3'
+import { Dashboard } from './dashboard.js'
 
 interface DaemonState {
   session: BrowserSession | null
@@ -13,6 +14,7 @@ interface DaemonState {
   wsTransport: WebSocketTransport | null
   restTransport: RESTAdapter | null
   engines: EngineManager | null
+  dashboard: Dashboard | null
   db: Database.Database | null
   options: SessionOptions
 }
@@ -23,6 +25,7 @@ const state: DaemonState = {
   wsTransport: null,
   restTransport: null,
   engines: null,
+  dashboard: null,
   db: null,
   options: {},
 }
@@ -69,6 +72,9 @@ const handler: RPCHandler = async (
     case 'explain': {
       if (!state.session) throw new Error('Session not started')
       const ir: BrowserIR = await state.session.explain()
+      if (state.dashboard) {
+        state.dashboard.updateIR(ir)
+      }
       return ir
     }
 
@@ -363,11 +369,13 @@ async function main() {
   state.transport = new UnixTransport(handler)
   state.wsTransport = new WebSocketTransport({ port: 3080 })
   state.restTransport = new RESTAdapter(handler, { port: 3081 })
+  state.dashboard = new Dashboard(4848)
 
   // Handle graceful shutdown
   const shutdown = async () => {
     console.log('browserd shutting down...')
     if (state.session) await state.session.stop()
+    if (state.dashboard) state.dashboard.stop()
     if (state.transport) await state.transport.stop()
     if (state.wsTransport) state.wsTransport.stop()
     if (state.restTransport) state.restTransport.stop()
@@ -382,6 +390,7 @@ async function main() {
   await state.transport.start()
   await state.wsTransport.start()
   await state.restTransport.start()
+  await state.dashboard.start()
   console.log(`browserd WebSocket listening on ws://localhost:${state.wsTransport.getPort()}`)
   console.log(`browserd REST API listening on http://localhost:${state.restTransport.getPort()}`)
 }
