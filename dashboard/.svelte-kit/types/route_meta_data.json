@@ -1,0 +1,21 @@
+{
+	"/": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.ts"
+	],
+	"/events": [
+		"src/routes/+layout.ts"
+	],
+	"/flows": [
+		"src/routes/+layout.ts"
+	],
+	"/knowledge": [
+		"src/routes/+layout.ts"
+	],
+	"/planner": [
+		"src/routes/+layout.ts"
+	],
+	"/viewport": [
+		"src/routes/+layout.ts"
+	]
+}

@@ -1,0 +1,1 @@
+../../../skills/bir/SKILL.md

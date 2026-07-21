@@ -1,0 +1,45 @@
+{
+  "name": "@browserir/core",
+  "version": "0.1.0",
+  "description": "Browser Intelligence Runtime — Semantic web understanding for AI agents",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "bir": "dist/adapters/cli/index.js",
+    "bir-daemon": "dist/daemon/server.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "AGENTS.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx watch src/daemon/server.ts",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "tsc --noEmit",
+    "start": "node dist/daemon/server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@types/ws": "^8.18.1",
+    "better-sqlite3": "^11.9.0",
+    "commander": "^13.1.0",
+    "playwright": "^1.52.0",
+    "ws": "^8.21.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.15.0",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
