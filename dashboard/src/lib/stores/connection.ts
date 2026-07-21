@@ -10,15 +10,17 @@ export function connect(port = 3080) {
   if (!browser) return
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return
 
+  // Connect via 127.0.0.1 to avoid macOS localhost IPv6 resolution issues
+  const targetHost = window.location.hostname === 'localhost' ? '127.0.0.1' : (window.location.hostname || '127.0.0.1')
+
   try {
-    ws = new WebSocket(`ws://localhost:${port}`)
+    ws = new WebSocket(`ws://${targetHost}:${port}`)
     ws.onopen = () => {
       wsConnected.set(true)
     }
     ws.onclose = () => {
       wsConnected.set(false)
       ws = null
-      // Auto-reconnect after 2 seconds
       setTimeout(() => connect(port), 2000)
     }
     ws.onerror = () => {

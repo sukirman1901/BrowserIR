@@ -42,7 +42,7 @@ export class WebSocketTransport {
         })
       })
 
-      this.server.listen(this.port, () => {
+      this.server.listen(this.port, '0.0.0.0', () => {
         // When port is 0, the OS assigns a random port — capture it
         const addr = this.server!.address()
         if (addr && typeof addr === 'object') {
