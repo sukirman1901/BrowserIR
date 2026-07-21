@@ -29,9 +29,10 @@ bir explain https://example.com
 ### CLI Commands
 ```bash
 bir explain [url]              # Get semantic IR of page
-bir click @e3                  # Click element by ref
+bir click @e3                  # Click element by ref with self-healing
 bir screenshot                 # Take screenshot
 bir diff compare <ir1> <ir2>   # Compare two IRs
+bir test <test-file>           # Run E2E tests from JSON
 bir memory recall <domain>     # Recall known patterns
 bir memory store <json>        # Store knowledge
 bir flow detect [url]          # Detect multi-step flows
@@ -39,7 +40,7 @@ bir graph show                 # Show agent dependency graph
 bir status                     # Check daemon status
 ```
 
-### MCP Tools (29 tools)
+### MCP Tools (30 tools)
 Use via MCP integration in Claude, Cursor, OpenCode, etc.
 
 ### MCP Server Configuration

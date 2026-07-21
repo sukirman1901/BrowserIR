@@ -39,7 +39,7 @@ BrowserIR provides two distinct interfaces depending on how you interact:
 
 ---
 
-## MCP Tools (29 tools for AI Agents)
+## MCP Tools (30 tools for AI Agents)
 
 ### Core Navigation & Analysis
 | Tool | Description | Input Schema |

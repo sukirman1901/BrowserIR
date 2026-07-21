@@ -11,7 +11,7 @@ Use this skill when the user wants to:
 - **Heal** broken selectors automatically
 - **Run** multi-browser sessions
 
-## MCP Tools (29 tools)
+## MCP Tools (30 tools)
 
 ### Core Navigation & Analysis
 - `bir_navigate` — Navigate to URL and return status
