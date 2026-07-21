@@ -46,7 +46,8 @@ BrowserIR provides two distinct interfaces depending on how you interact:
 |------|-------------|--------------|
 | `bir_navigate` | Navigate to URL in browser | `{ url: string }` |
 | `bir_explain` | Analyze page and return semantic BrowserIR | `{ url: string }` |
-| `bir_click` | Click element by ref (`@e1`, `@e2`, ...) | `{ ref: string }` |
+| `bir_analyze` | Create a BrowserSession for analysis and interaction | `{ url: string }` |
+| `bir_click` | Click element by ref (`@e1`, `@e2`, ...) with self-healing | `{ ref: string }` |
 | `bir_screenshot` | Take screenshot of current page | `{}` |
 | `bir_graph` | Get page structure as tree graph | `{ url: string }` |
 | `bir_tabs` | List all open browser tabs | `{}` |

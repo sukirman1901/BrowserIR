@@ -60,7 +60,8 @@ Use via MCP integration in Claude, Cursor, OpenCode, etc.
 #### Core Navigation & Analysis
 - `bir_navigate` — Navigate to URL and return status
 - `bir_explain` — Analyze page and return semantic BrowserIR
-- `bir_click` — Click element by ref (@e1, @e2, ...)
+- `bir_analyze` — Create a BrowserSession for analysis and interaction
+- `bir_click` — Click element by ref (@e1, @e2, ...) with self-healing
 - `bir_screenshot` — Take screenshot of current page
 - `bir_graph` — Get page structure as tree graph
 - `bir_tabs` — List all browser tabs

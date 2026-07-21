@@ -111,7 +111,7 @@ export const statusTool = {
 }
 
 export const analyzeTool = {
-  name: 'analyze',
+  name: 'bir_analyze',
   description: 'Create a BrowserSession for analysis and interaction',
   inputSchema: {
     url: z.string().url().describe('URL to analyze'),

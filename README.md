@@ -79,6 +79,7 @@ Add BrowserIR to your MCP config (`claude_desktop_config.json`, Cursor, OpenCode
 
 #### Core MCP Tools (30 Tools Total):
 - `bir_explain` — Analyze web page and return BrowserIR
+- `bir_analyze` — Create a BrowserSession for analysis and interaction
 - `bir_click` — Click element by ref (e.g. `@e3`) with self-healing
 - `bir_navigate` — Navigate to URL
 - `bir_screenshot` — Capture screenshot
