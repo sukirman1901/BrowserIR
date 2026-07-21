@@ -326,12 +326,13 @@ export class SemanticAnalyzer {
     const type = this.mapA11yRoleToComponentType(role)
     if (!type) return null
 
+    const states = node.states || []
     const state: ComponentState = {
-      visible: !node.states.includes('hidden'),
-      enabled: !node.states.includes('disabled'),
-      focused: node.states.includes('focused'),
+      visible: !states.includes('hidden'),
+      enabled: !states.includes('disabled'),
+      focused: states.includes('focused'),
       loading: false,
-      checked: node.states.includes('checked'),
+      checked: states.includes('checked'),
     }
 
     const evidence: Evidence = {
