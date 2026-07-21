@@ -107,6 +107,17 @@ CREATE TABLE IF NOT EXISTS agent_actions (
   timestamp INTEGER NOT NULL,
   FOREIGN KEY (agent_id) REFERENCES agents(id)
 );
+
+-- Selector History for Self-Healing
+CREATE TABLE IF NOT EXISTS selector_history (
+  id TEXT PRIMARY KEY,
+  domain TEXT NOT NULL,
+  original_selector TEXT NOT NULL,
+  healed_selector TEXT NOT NULL,
+  method TEXT NOT NULL,
+  success INTEGER NOT NULL,
+  timestamp INTEGER NOT NULL
+);
 `;
 
 export const INDEXES_SQL = `
@@ -132,4 +143,5 @@ CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
 CREATE INDEX IF NOT EXISTS idx_agent_actions_agent ON agent_actions(agent_id);
 CREATE INDEX IF NOT EXISTS idx_agent_actions_type ON agent_actions(type);
 CREATE INDEX IF NOT EXISTS idx_agent_actions_timestamp ON agent_actions(timestamp);
+CREATE INDEX IF NOT EXISTS idx_selector_history_original ON selector_history(original_selector);
 `;

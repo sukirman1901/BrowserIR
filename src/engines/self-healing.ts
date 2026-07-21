@@ -1,8 +1,9 @@
 import type { BrowserIR, ComponentIR } from '../ir/types.js'
 import type { MemoryEngine } from './memory.js'
+import type { SelectorHistory } from './self-healing-history.js'
 
 export interface HealingStep {
-  method: 'semantic' | 'visual' | 'text' | 'position' | 'memory'
+  method: 'semantic' | 'visual' | 'text' | 'position' | 'memory' | 'history'
   confidence: number
   description: string
 }
@@ -62,10 +63,21 @@ function stringSimilarity(a: string, b: string): number {
 }
 
 export class SelfHealingEngine {
-  constructor(private memory: MemoryEngine) {}
+  constructor(private memory: MemoryEngine, private history?: SelectorHistory) {}
 
-  async heal(brokenSelector: string, ir: BrowserIR, intent?: string): Promise<HealingResult> {
+  async heal(brokenSelector: string, ir: BrowserIR, intent?: string, domain?: string): Promise<HealingResult> {
     const attempts: HealingStep[] = []
+
+    // Strategy 0: Check history for successful heals
+    if (this.history && domain) {
+      const historicalHeal = await this.history.findSuccessfulHeal(brokenSelector)
+      if (historicalHeal) {
+        attempts.push({ method: 'history', confidence: 0.95, description: 'Found successful heal in history' })
+        await this.history.record(domain, brokenSelector, historicalHeal, 'history', true)
+        return { found: true, selector: historicalHeal, confidence: 0.95, method: 'history', attempts }
+      }
+    }
+
     const components = getComponents(ir)
 
     if (components.length === 0) {
@@ -90,6 +102,7 @@ export class SelfHealingEngine {
     if (bestTextMatch && bestTextMatch.score >= 0.5) {
       attempts.push({ method: 'text', confidence: bestTextMatch.score, description: `Fuzzy text match (${Math.round(bestTextMatch.score * 100)}% similarity)` })
       const sel = bestTextMatch.component.evidence[0]?.selector || `#${bestTextMatch.component.id}`
+      await this.recordAttempt(domain, brokenSelector, sel, 'text', true)
       return { found: true, selector: sel, confidence: Math.min(bestTextMatch.score, 0.95), method: 'text', attempts }
     } else if (bestTextMatch) {
       attempts.push({ method: 'text', confidence: bestTextMatch.score, description: `Best text similarity score (${Math.round(bestTextMatch.score * 100)}%) below threshold` })
@@ -100,6 +113,7 @@ export class SelfHealingEngine {
       for (const ev of c.evidence) {
         if (cleanSelector.split(' ').some(token => token.length > 2 && ev.selector.toLowerCase().includes(token))) {
           attempts.push({ method: 'semantic', confidence: 0.85, description: 'Found via ARIA evidence attribute match' })
+          await this.recordAttempt(domain, brokenSelector, ev.selector || `#${c.id}`, 'semantic', true)
           return { found: true, selector: ev.selector || `#${c.id}`, confidence: 0.85, method: 'semantic', attempts }
         }
       }
@@ -116,6 +130,7 @@ export class SelfHealingEngine {
     if (semanticMatch) {
       attempts.push({ method: 'semantic', confidence: 0.9, description: 'Semantic match by type or intent' })
       const sel = semanticMatch.evidence[0]?.selector || `#${semanticMatch.id}`
+      await this.recordAttempt(domain, brokenSelector, sel, 'semantic', true)
       return { found: true, selector: sel, confidence: 0.9, method: 'semantic', attempts }
     }
 
@@ -124,6 +139,7 @@ export class SelfHealingEngine {
       const memoryMatch = await this.findByMemory(ir.page.url)
       if (memoryMatch) {
         attempts.push({ method: 'memory', confidence: 0.85, description: 'Found in domain memory' })
+        await this.recordAttempt(domain, brokenSelector, memoryMatch, 'memory', true)
         return { found: true, selector: memoryMatch, confidence: 0.85, method: 'memory', attempts }
       }
     } catch {
@@ -131,7 +147,14 @@ export class SelfHealingEngine {
     }
 
     attempts.push({ method: 'semantic', confidence: 0, description: 'No matching component found' })
+    await this.recordAttempt(domain, brokenSelector, '', 'none', false)
     return { found: false, confidence: 0, method: 'none', attempts }
+  }
+
+  private async recordAttempt(domain: string | undefined, original: string, healed: string, method: string, success: boolean): Promise<void> {
+    if (this.history && domain) {
+      await this.history.record(domain, original, healed, method, success)
+    }
   }
 
   private async findByMemory(url: string): Promise<string | null> {
