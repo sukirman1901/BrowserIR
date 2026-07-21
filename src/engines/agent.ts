@@ -42,6 +42,7 @@ export interface AgentConflict {
 export class AgentCoordinator {
   private agents = new Map<string, Agent>()
   private actions: AgentAction[] = []
+  private conflictsList: AgentConflict[] = []
   private sharedState: SharedPageState | null = null
 
   async registerAgent(agent: Omit<Agent, 'createdAt'>): Promise<Agent> {
@@ -54,6 +55,16 @@ export class AgentCoordinator {
     this.agents.delete(id)
   }
 
+  async updateSharedState(ir: BrowserIR): Promise<SharedPageState> {
+    const currentVersion = this.sharedState ? this.sharedState.version + 1 : 1
+    this.sharedState = {
+      currentIR: ir,
+      lastUpdated: Date.now(),
+      version: currentVersion,
+    }
+    return this.sharedState
+  }
+
   async claimAction(action: AgentAction): Promise<{ allowed: boolean; reason?: string }> {
     const recent = this.actions.slice(-10)
     const conflict = recent.find(a => 
@@ -64,7 +75,29 @@ export class AgentCoordinator {
     )
     
     if (conflict) {
+      const conflictEntry: AgentConflict = {
+        agentA: conflict.agentId,
+        agentB: action.agentId,
+        action,
+        resolution: 'wait',
+      }
+      this.conflictsList.push(conflictEntry)
+
+      // Update agent status
+      const ag = this.agents.get(action.agentId)
+      if (ag) {
+        ag.status = 'waiting'
+        ag.lastAction = action
+      }
+
       return { allowed: false, reason: `Conflicting action by agent ${conflict.agentId}` }
+    }
+
+    // Update agent status on success
+    const ag = this.agents.get(action.agentId)
+    if (ag) {
+      ag.status = 'working'
+      ag.lastAction = action
     }
     
     this.actions.push(action)
@@ -75,7 +108,7 @@ export class AgentCoordinator {
     return {
       agents: Array.from(this.agents.values()),
       sharedState: this.sharedState || { currentIR: null as any, lastUpdated: 0, version: 0 },
-      conflicts: []
+      conflicts: this.conflictsList,
     }
   }
 }

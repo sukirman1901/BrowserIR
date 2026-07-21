@@ -112,7 +112,6 @@ export class SemanticAnalyzer {
 
     const sections = this.extractSections(options)
     const intent = this.classifyIntent(options, sections)
-    const metadata = this.extractMetadata(options)
     const components = this.extractComponents(options)
 
     // If no sections found, create a default content section
@@ -127,6 +126,8 @@ export class SemanticAnalyzer {
         children: [],
       })
     }
+
+    const metadata = this.extractMetadata(options, sections)
 
     const page: PageIR = {
       id: this.nextId(),
@@ -476,15 +477,27 @@ export class SemanticAnalyzer {
     }
   }
 
-  private extractMetadata(options: AnalyzerOptions): PageMetadata {
+  private extractMetadata(options: AnalyzerOptions, sections: SectionIR[]): PageMetadata {
+    let totalComponents = 0
+    let totalForms = 0
+    let totalLinks = 0
+
+    for (const s of sections) {
+      if (s.role === 'form') totalForms++
+      for (const c of s.components) {
+        totalComponents++
+        if (c.type === 'link') totalLinks++
+      }
+    }
+
     return {
       framework: options.framework,
       frameworkVersion: options.frameworkVersion,
       hasAccessibilityTree: !!options.a11y,
       hasReactFiber: options.framework === 'react',
-      totalComponents: 0, // Will be updated after component extraction
-      totalForms: 0,
-      totalLinks: 0,
+      totalComponents,
+      totalForms,
+      totalLinks,
       loadTime: 0,
       domSize: this.countDOMNodes(options.dom),
     }

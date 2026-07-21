@@ -89,26 +89,44 @@ export class PlannerEngine {
     return plan
   }
 
-  async executePlan(plan: Plan): Promise<PlanResult> {
+  async executePlan(plan: Plan, page?: any): Promise<PlanResult> {
     plan.status = 'executing'
     plan.updatedAt = Date.now()
 
     for (const step of plan.steps) {
       step.status = 'executing' as any
       try {
-        await this.executeStep(step)
+        await this.executeStep(step, page)
         step.status = 'done'
         plan.context.history.push(step)
       } catch (error) {
         step.status = 'failed'
         step.attempts++
+
+        // Try self-healing fallback if target exists and page is present
+        if (page && step.target) {
+          try {
+            const currentUrl = page.url()
+            const healResult = await this.healing.heal(step.target, { page: { url: currentUrl, title: '', intent: {} as any, sections: [], metadata: {} as any } } as any)
+            if (healResult.found && healResult.selector) {
+              step.target = healResult.selector
+              await this.executeStep(step, page)
+              step.status = 'done'
+              plan.context.history.push(step)
+              continue
+            }
+          } catch {
+            // Healing failed
+          }
+        }
+
         if (step.attempts < step.maxAttempts) {
           step.status = 'pending'
           continue
         }
         plan.status = 'failed'
         this.stmts.updateStatus.run(plan.status, JSON.stringify(plan.context), plan.updatedAt, plan.id)
-        return { plan, success: false, message: `Step failed: ${step.action}` }
+        return { plan, success: false, message: `Step failed: ${step.action} on ${step.target || 'target'}` }
       }
     }
 
@@ -165,12 +183,42 @@ export class PlannerEngine {
     }
   }
 
-  private async executeStep(step: PlanStep): Promise<void> {
+  private async executeStep(step: PlanStep, page?: any): Promise<void> {
+    // 1. Log event
     await this.events.capture({
       type: step.action === 'click' ? 'click' : step.action === 'type' ? 'input' : 'navigation',
       timestamp: Date.now(),
       data: { selector: step.target, value: step.value },
       sessionId: `planner`
     })
+
+    // 2. Perform live Playwright actions if page object is provided
+    if (page) {
+      if (step.action === 'navigate' && step.target) {
+        await page.goto(step.target)
+      } else if (step.action === 'click' && step.target) {
+        await page.click(step.target)
+      } else if (step.action === 'type' && step.target) {
+        await page.fill(step.target, step.value || '')
+      } else if (step.action === 'wait') {
+        const ms = parseInt(step.value || '1000', 10)
+        await page.waitForTimeout(ms)
+      } else if (step.action === 'verify' && step.expectation) {
+        await this.verifyExpectation(page, step.expectation)
+      }
+    }
+  }
+
+  private async verifyExpectation(page: any, expectation: Expectation): Promise<void> {
+    if (expectation.type === 'element_visible') {
+      await page.waitForSelector(expectation.value, { state: 'visible', timeout: expectation.timeout || 5000 })
+    } else if (expectation.type === 'url_changed') {
+      await page.waitForURL((url: URL) => url.toString().includes(expectation.value), { timeout: expectation.timeout || 5000 })
+    } else if (expectation.type === 'text_contains') {
+      const content = await page.textContent('body')
+      if (!content || !content.includes(expectation.value)) {
+        throw new Error(`Text "${expectation.value}" not found on page`)
+      }
+    }
   }
 }

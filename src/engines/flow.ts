@@ -16,6 +16,8 @@ export interface FlowStep {
   intent: string
   action: string
   selector?: string
+  required?: boolean
+  estimatedDuration?: number
   alternatives: string[]
 }
 
@@ -27,7 +29,7 @@ export class FlowEngine {
       'SELECT * FROM events WHERE session_id = ? ORDER BY timestamp ASC'
     ).all(sessionId) as any[]
 
-    if (rows.length < 3) return []
+    if (rows.length === 0) return []
 
     // Group into sequences (5s gap = new sequence)
     const sequences: any[][] = []
@@ -53,32 +55,77 @@ export class FlowEngine {
       }
     }
 
-    // Create flows for repeated patterns
+    // Create flows for patterns
     const flows: Flow[] = []
     for (const [signature, { count, steps }] of patternCounts) {
-      if (count >= 2) {
-        const id = randomUUID()
-        const flowSteps: FlowStep[] = steps.map((s: any) => ({
+      const id = randomUUID()
+
+      // Extract domain from event data
+      let domain = 'default'
+      for (const s of steps) {
+        try {
+          const dataObj = typeof s.data === 'string' ? JSON.parse(s.data) : s.data
+          if (dataObj?.url) {
+            domain = new URL(dataObj.url).hostname
+            break
+          } else if (dataObj?.domain) {
+            domain = dataObj.domain
+            break
+          }
+        } catch {
+          // ignore parsing error
+        }
+      }
+
+      // Infer semantic flow name
+      const fullText = steps.map(s => {
+        const d = typeof s.data === 'string' ? s.data : JSON.stringify(s.data)
+        return `${s.type} ${d}`
+      }).join(' ').toLowerCase()
+
+      let name = `Flow: ${signature}`
+      if (/login|password|signin|auth/.test(fullText)) {
+        name = 'Authentication Flow'
+      } else if (/checkout|payment|card|pay/.test(fullText)) {
+        name = 'Checkout & Payment Flow'
+      } else if (/search|query|find/.test(fullText)) {
+        name = 'Search Flow'
+      }
+
+      // Build flow steps with duration & requirement estimations
+      const flowSteps: FlowStep[] = steps.map((s: any, idx: number) => {
+        let parsedData: any = {}
+        try {
+          parsedData = typeof s.data === 'string' ? JSON.parse(s.data) : s.data
+        } catch {}
+
+        const prevTimestamp = idx > 0 ? steps[idx - 1].timestamp : s.timestamp
+        const duration = Math.max(500, s.timestamp - prevTimestamp)
+
+        return {
           intent: s.type,
           action: s.type,
-          selector: JSON.parse(s.data).selector,
+          selector: parsedData.selector || undefined,
+          required: s.type === 'input' || s.type === 'click',
+          estimatedDuration: duration,
           alternatives: []
-        }))
-        const flow: Flow = {
-          id,
-          name: `Flow: ${signature}`,
-          domain: 'unknown',
-          steps: flowSteps,
-          frequency: count,
-          confidence: Math.min(1, count / 5),
-          lastSeen: steps[steps.length - 1].timestamp
         }
-        flows.push(flow)
+      })
 
-        this.db.prepare(
-          'INSERT OR REPLACE INTO flows (id, name, domain, steps, frequency, confidence, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)'
-        ).run(id, flow.name, flow.domain, JSON.stringify(flow.steps), flow.frequency, flow.confidence, flow.lastSeen)
+      const flow: Flow = {
+        id,
+        name,
+        domain,
+        steps: flowSteps,
+        frequency: count,
+        confidence: Math.min(1, count / 3),
+        lastSeen: steps[steps.length - 1].timestamp
       }
+      flows.push(flow)
+
+      this.db.prepare(
+        'INSERT OR REPLACE INTO flows (id, name, domain, steps, frequency, confidence, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(id, flow.name, flow.domain, JSON.stringify(flow.steps), flow.frequency, flow.confidence, flow.lastSeen)
     }
 
     return flows
