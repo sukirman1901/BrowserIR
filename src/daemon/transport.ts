@@ -40,6 +40,8 @@ export class UnixTransport {
       this.server = net.createServer((socket) => {
         let buffer = ''
 
+        socket.on('error', () => {})
+
         socket.on('data', async (data) => {
           buffer += data.toString()
 
@@ -59,7 +61,9 @@ export class UnixTransport {
                 result,
               }
 
-              socket.write(JSON.stringify(response) + '\n')
+              if (socket.writable) {
+                socket.write(JSON.stringify(response) + '\n')
+              }
             } catch (err) {
               const errorResponse: RPCResponse = {
                 id: 'error',
@@ -68,7 +72,9 @@ export class UnixTransport {
                   message: err instanceof Error ? err.message : 'Unknown error',
                 },
               }
-              socket.write(JSON.stringify(errorResponse) + '\n')
+              if (socket.writable) {
+                socket.write(JSON.stringify(errorResponse) + '\n')
+              }
             }
           }
         })
@@ -113,17 +119,28 @@ export class RPCClient {
     return new Promise((resolve, reject) => {
       const id = Math.random().toString(36).slice(2)
       const request: RPCRequest = { id, method, params }
+      let buffer = ''
 
       const responseHandler = (data: Buffer) => {
-        const response: RPCResponse = JSON.parse(data.toString())
+        buffer += data.toString()
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
 
-        if (response.id === id) {
-          sock.removeListener('data', responseHandler)
-
-          if (response.error) {
-            reject(new Error(response.error.message))
-          } else {
-            resolve(response.result)
+        for (const line of lines) {
+          if (!line.trim()) continue
+          try {
+            const response: RPCResponse = JSON.parse(line)
+            if (response.id === id) {
+              sock.removeListener('data', responseHandler)
+              if (response.error) {
+                reject(new Error(response.error.message))
+              } else {
+                resolve(response.result)
+              }
+              return
+            }
+          } catch (err) {
+            // Ignore incomplete chunks
           }
         }
       }
