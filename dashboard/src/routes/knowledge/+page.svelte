@@ -1,19 +1,26 @@
-<script>
-  import { sendRpc } from '$lib/stores/connection'
-  import { onMount } from 'svelte'
+<script lang="ts">
+  import { wsConnected, sendRpc } from '$lib/stores/connection'
 
-  let nodes = $state([])
+  let nodes = $state<any[]>([])
   let searchQuery = $state('')
   let loading = $state(true)
 
-  onMount(async () => {
-    try {
-      const result = await sendRpc('knowledge.search', { query: '' })
-      nodes = result || []
-    } catch {
+  $effect(() => {
+    if ($wsConnected) {
+      loading = true
+      sendRpc('knowledge.search', { query: '' })
+        .then((result) => {
+          nodes = result?.nodes || []
+        })
+        .catch(() => {
+          nodes = []
+        })
+        .finally(() => {
+          loading = false
+        })
+    } else {
+      loading = true
       nodes = []
-    } finally {
-      loading = false
     }
   })
 

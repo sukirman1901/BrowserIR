@@ -1,10 +1,9 @@
-<script>
+<script lang="ts">
   import { sendRpc } from '$lib/stores/connection'
-  import { onMount } from 'svelte'
 
   let goal = $state('')
   let domain = $state('')
-  let plans = $state([])
+  let plans = $state<any[]>([])
   let loading = $state(false)
   let creating = $state(false)
 
@@ -16,19 +15,19 @@
       plans = [...plans, plan]
       goal = ''
       domain = ''
-    } catch (e) {
+    } catch (e: any) {
       alert('Failed to create plan: ' + e.message)
     } finally {
       creating = false
     }
   }
 
-  async function executePlan(planId) {
+  async function executePlan(planId: string) {
     loading = true
     try {
       const result = await sendRpc('planner.execute', { planId })
       plans = plans.map(p => p.id === planId ? { ...p, ...result.plan } : p)
-    } catch (e) {
+    } catch (e: any) {
       alert('Failed to execute plan: ' + e.message)
     } finally {
       loading = false

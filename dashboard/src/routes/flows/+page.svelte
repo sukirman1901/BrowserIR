@@ -1,19 +1,26 @@
-<script>
+<script lang="ts">
   import FlowGraph from '$lib/components/FlowGraph.svelte'
-  import { sendRpc } from '$lib/stores/connection'
-  import { onMount } from 'svelte'
+  import { wsConnected, sendRpc } from '$lib/stores/connection'
 
-  let flows = $state([])
+  let flows = $state<any[]>([])
   let loading = $state(true)
 
-  onMount(async () => {
-    try {
-      const result = await sendRpc('flow.list', { domain: '' })
-      flows = result || []
-    } catch {
+  $effect(() => {
+    if ($wsConnected) {
+      loading = true
+      sendRpc('flow.list', { domain: '' })
+        .then((result) => {
+          flows = result || []
+        })
+        .catch(() => {
+          flows = []
+        })
+        .finally(() => {
+          loading = false
+        })
+    } else {
+      loading = true
       flows = []
-    } finally {
-      loading = false
     }
   })
 </script>

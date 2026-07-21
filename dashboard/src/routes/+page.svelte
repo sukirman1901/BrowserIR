@@ -1,17 +1,25 @@
-<script>
+<script lang="ts">
   import { wsConnected, sendRpc } from '$lib/stores/connection'
-  import { onMount } from 'svelte'
 
-  let status = $state(null)
+  let status = $state<any>(null)
   let loading = $state(true)
 
-  onMount(async () => {
-    try {
-      status = await sendRpc('status')
-    } catch {
-      status = { error: 'Daemon not available' }
-    } finally {
-      loading = false
+  $effect(() => {
+    if ($wsConnected) {
+      loading = true
+      sendRpc('status')
+        .then((res) => {
+          status = res
+        })
+        .catch(() => {
+          status = { error: 'Daemon not available' }
+        })
+        .finally(() => {
+          loading = false
+        })
+    } else {
+      loading = true
+      status = null
     }
   })
 </script>

@@ -1,8 +1,8 @@
-<script>
-  import { sendRpc } from '$lib/stores/connection'
+<script lang="ts">
+  import { wsConnected, sendRpc } from '$lib/stores/connection'
 
   let screenshot = $state('')
-  let ir = $state(null)
+  let ir = $state<any>(null)
   let error = $state('')
   let loading = $state(true)
 
@@ -13,7 +13,7 @@
       const result = await sendRpc('screenshot')
       screenshot = result.screenshot || ''
       ir = await sendRpc('explain')
-    } catch (e) {
+    } catch (e: any) {
       error = e.message || 'Failed to load viewport'
     } finally {
       loading = false
@@ -21,7 +21,9 @@
   }
 
   $effect(() => {
-    refresh()
+    if ($wsConnected) {
+      refresh()
+    }
   })
 </script>
 
