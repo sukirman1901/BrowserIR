@@ -251,7 +251,7 @@ const handler: RPCHandler = async (
       if (!planId) throw new Error('planId required')
       const plan = await state.engines!.planner.getPlan(planId)
       if (!plan) throw new Error(`Plan ${planId} not found`)
-      const result = await state.engines!.planner.executePlan(plan)
+      const result = await state.engines!.planner.executePlan(plan, state.session?.page)
       return result
     }
 
