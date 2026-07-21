@@ -6,6 +6,8 @@ Use this skill when the user wants to:
 - **Understand** what a web page is for (intent, purpose, meaning)
 - **Analyze** page structure semantically (sections, components, hierarchy)
 - **Read** any web content (articles, docs, API docs, blogs)
+- **Fetch** URLs directly without browser (HTML→Markdown)
+- **Search** the web for information (DuckDuckGo)
 - **Test** web UIs with semantic understanding
 - **Compare** page versions (diff)
 - **Learn** about websites (memory)
@@ -22,7 +24,7 @@ Use this skill when the user wants to:
 
 BrowserIR compiles web pages into **semantic intermediate representations (IR)** — typed structures that AI can reason about. It's a **semantic understanding engine**, not just browser automation.
 
-### Key Capabilities (23)
+### Key Capabilities (25)
 
 1. **Semantic Analysis** — Understands page purpose with 20+ intent categories
 2. **Intent Recognition** — Classifies page type (auth, purchase, documentation, tutorial, blog, api, forum, chat, dashboard, settings, profile, checkout, payment, subscription, support, feedback, contact, social, media, download)

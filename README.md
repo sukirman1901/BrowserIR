@@ -20,6 +20,7 @@
 - [MCP Server Setup](#mcp-server-setup)
 - [MCP Tools Reference](#mcp-tools-reference)
   - [Core Navigation & Analysis](#core-navigation--analysis)
+  - [Web Fetch & Search](#web-fetch--search)
   - [Semantic Analysis](#semantic-analysis)
   - [Memory System](#memory-system)
   - [Knowledge Graph](#knowledge-graph)
@@ -194,6 +195,14 @@ Expected: 30 tools listed.
 | `bir_graph` | Get page structure as tree graph |
 | `bir_tabs` | List all browser tabs |
 | `bir_status` | Check daemon status |
+
+### Web Fetch & Search
+
+| Tool | Description |
+|------|-------------|
+| `bir_fetch` | Fetch URL content without browser (HTML→Markdown) |
+| `bir_search` | Search web via DuckDuckGo API |
+| `bir_read` | Read and extract semantic content from URL |
 
 ### Semantic Analysis
 

@@ -6,6 +6,8 @@ Use this skill when the user wants to:
 - **Understand** what a web page is for (intent, purpose, meaning)
 - **Analyze** page structure semantically (sections, components, hierarchy)
 - **Read** any web content (articles, docs, API docs, blogs)
+- **Fetch** URLs directly without browser (HTML→Markdown conversion)
+- **Search** the web for information (DuckDuckGo integration)
 - **Test** web UIs with semantic understanding
 - **Compare** page versions (diff)
 - **Learn** about websites (memory)
@@ -30,7 +32,7 @@ Use this skill when the user wants to:
 
 BrowserIR compiles web pages into **semantic intermediate representations (IR)** — typed structures that AI can reason about. It's a **semantic understanding engine**, not just browser automation.
 
-### Key Capabilities (20+)
+### Key Capabilities (25)
 
 1. **Semantic Analysis** — Understands page purpose with 20+ intent categories
 2. **Intent Recognition** — Classifies page type (auth, purchase, documentation, tutorial, blog, api, forum, chat, dashboard, settings, profile, checkout, payment, subscription, support, feedback, contact, social, media, download)
@@ -55,6 +57,8 @@ BrowserIR compiles web pages into **semantic intermediate representations (IR)**
 21. **File Manager** — Download, upload, PDF export
 22. **Session Manager** — Idle timeout, auto-save, state expiration, encryption (AES-256)
 23. **Dashboard** — Real-time semantic analysis monitoring with SSE (port 4848)
+24. **Web Fetch** — Fetch URLs directly without browser (HTML→Markdown conversion)
+25. **Web Search** — Search web via DuckDuckGo API
 
 ---
 

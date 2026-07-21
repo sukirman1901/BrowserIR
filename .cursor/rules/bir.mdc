@@ -4,6 +4,8 @@ Use this skill when the user wants to:
 - **Understand** what a web page is for (intent, purpose, meaning)
 - **Analyze** page structure semantically (sections, components, hierarchy)
 - **Read** any web content (articles, docs, API docs, blogs)
+- **Fetch** URLs directly without browser (HTML→Markdown)
+- **Search** the web for information (DuckDuckGo)
 - **Test** web UIs with semantic understanding
 - **Compare** page versions (diff)
 - **Learn** about websites (memory)
@@ -27,6 +29,11 @@ Use this skill when the user wants to:
 - `bir_graph` — Get page structure as tree graph
 - `bir_tabs` — List all browser tabs
 - `bir_status` — Check daemon status
+
+### Web Fetch & Search
+- `bir_fetch` — Fetch URL content without browser (HTML→Markdown)
+- `bir_search` — Search web via DuckDuckGo API
+- `bir_read` — Read and extract semantic content from URL
 
 ### Semantic Analysis
 - `bir_flow_detect` — Detect multi-step flows from captured events
