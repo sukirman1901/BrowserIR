@@ -108,6 +108,28 @@ CREATE TABLE IF NOT EXISTS agent_actions (
   FOREIGN KEY (agent_id) REFERENCES agents(id)
 );
 
+-- Phase 4: Session Memory
+CREATE TABLE IF NOT EXISTS session_memory (
+  id TEXT PRIMARY KEY,
+  domain TEXT NOT NULL,
+  url_pattern TEXT NOT NULL,
+  intent TEXT NOT NULL,
+  components TEXT NOT NULL,
+  flows TEXT NOT NULL,
+  confidence REAL DEFAULT 0.5,
+  visit_count INTEGER DEFAULT 1,
+  last_visit INTEGER NOT NULL,
+  first_visit INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS session_snapshots (
+  id TEXT PRIMARY KEY,
+  domain TEXT NOT NULL,
+  url TEXT NOT NULL,
+  ir TEXT NOT NULL,
+  timestamp INTEGER NOT NULL
+);
+
 -- Selector History for Self-Healing
 CREATE TABLE IF NOT EXISTS selector_history (
   id TEXT PRIMARY KEY,
@@ -143,5 +165,7 @@ CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
 CREATE INDEX IF NOT EXISTS idx_agent_actions_agent ON agent_actions(agent_id);
 CREATE INDEX IF NOT EXISTS idx_agent_actions_type ON agent_actions(type);
 CREATE INDEX IF NOT EXISTS idx_agent_actions_timestamp ON agent_actions(timestamp);
+CREATE INDEX IF NOT EXISTS idx_session_memory_domain ON session_memory(domain);
+CREATE INDEX IF NOT EXISTS idx_session_snapshots_domain ON session_snapshots(domain);
 CREATE INDEX IF NOT EXISTS idx_selector_history_original ON selector_history(original_selector);
 `;

@@ -9,6 +9,7 @@ import { KnowledgeEngine } from '../engines/knowledge.js'
 import { PlannerEngine } from '../engines/planner.js'
 import { MultiBrowserEngine } from '../engines/multi-browser.js'
 import { AgentCoordinator } from '../engines/agent.js'
+import { SessionMemory } from '../engines/session-memory.js'
 
 /**
  * EngineManager instantiates all 9 engines with a shared database,
@@ -24,6 +25,7 @@ export class EngineManager {
   readonly planner: PlannerEngine
   readonly multi: MultiBrowserEngine
   readonly agent: AgentCoordinator
+  readonly sessionMemory: SessionMemory
 
   constructor(db: Database.Database) {
     this.memory = new MemoryEngine(db)
@@ -42,5 +44,6 @@ export class EngineManager {
     )
     this.multi = new MultiBrowserEngine()
     this.agent = new AgentCoordinator(db)
+    this.sessionMemory = new SessionMemory(db)
   }
 }
