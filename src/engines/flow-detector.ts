@@ -11,9 +11,30 @@ export interface DetectedFlow {
   confidence: number
 }
 
+interface FlowNode {
+  id: string
+  type: string
+  label: string
+  intent: string
+  section: string
+}
+
+interface FlowEdge {
+  from: string
+  to: string
+  type: 'input_to_submit' | 'navigation' | 'dependency'
+}
+
+interface FlowGraph {
+  nodes: FlowNode[]
+  edges: FlowEdge[]
+}
+
 export class FlowDetector {
   detectFlows(ir: BrowserIR): DetectedFlow[] {
     const flows: DetectedFlow[] = []
+
+    // Legacy pattern detection
     const loginFlow = this.detectLoginFlow(ir)
     if (loginFlow) flows.push(loginFlow)
     const checkoutFlow = this.detectCheckoutFlow(ir)
@@ -22,6 +43,71 @@ export class FlowDetector {
     if (searchFlow) flows.push(searchFlow)
     const regFlow = this.detectRegistrationFlow(ir)
     if (regFlow) flows.push(regFlow)
+
+    // Dynamic graph-based detection
+    const graph = this.analyzePageGraph(ir)
+    const graphFlows = this.detectFlowsFromGraph(graph)
+    flows.push(...graphFlows)
+
+    return flows
+  }
+
+  private analyzePageGraph(ir: BrowserIR): FlowGraph {
+    const graph: FlowGraph = { nodes: [], edges: [] }
+
+    for (const section of ir.page.sections) {
+      for (const comp of section.components) {
+        graph.nodes.push({
+          id: comp.id,
+          type: comp.type,
+          label: comp.label,
+          intent: comp.intent,
+          section: section.role
+        })
+
+        if (comp.type === 'field') {
+          const submitBtn = section.components.find(c =>
+            c.type === 'button' && /submit|send|save|confirm/i.test(c.label)
+          )
+          if (submitBtn) {
+            graph.edges.push({ from: comp.id, to: submitBtn.id, type: 'input_to_submit' })
+          }
+        }
+      }
+    }
+
+    return graph
+  }
+
+  private detectFlowsFromGraph(graph: FlowGraph): DetectedFlow[] {
+    const flows: DetectedFlow[] = []
+    const submitButtons = graph.nodes.filter(n =>
+      n.type === 'button' && /submit|send|save|confirm|login|register/i.test(n.label)
+    )
+
+    for (const btn of submitButtons) {
+      const connectedFields = graph.edges
+        .filter(e => e.to === btn.id && e.type === 'input_to_submit')
+        .map(e => graph.nodes.find(n => n.id === e.from))
+        .filter(Boolean)
+
+      if (connectedFields.length > 0) {
+        flows.push({
+          name: `${btn.label} Flow`,
+          steps: [
+            ...connectedFields.map((f, i) => ({
+              order: i + 1,
+              action: `input ${f!.label}`,
+              componentRef: f!.id,
+              required: true
+            })),
+            { order: connectedFields.length + 1, action: `click ${btn.label}`, componentRef: btn.id, required: true }
+          ],
+          confidence: 0.85
+        })
+      }
+    }
+
     return flows
   }
 
