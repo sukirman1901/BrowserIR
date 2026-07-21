@@ -6,65 +6,63 @@
 
 ---
 
-## 💡 Why BrowserIR?
+## Table of Contents
 
-Traditional browser automation tools (Playwright, Puppeteer, Selenium) operate at the **DOM level** — making them fragile and expensive for AI agents. **BrowserIR understands pages at the semantic level.**
-
-| Feature | Playwright / Puppeteer | BrowserIR |
-| :--- | :--- | :--- |
-| **Perspective** | Raw HTML / CSS Selectors | Typed Semantic Tree (Intent, Sections, Components) |
-| **Token Cost** | Thousands of HTML tokens per step | 70% fewer tokens with clean IR |
-| **UI Resiliency** | Breaks when CSS classes change | Deterministic refs (`@e1`, `@e2`) + Self-Healing |
-| **Risk Detection** | None | Automatic warning on destructive/credential actions |
-| **AI Integration** | Requires custom wrapper | Native **30 MCP Tools** for Claude, Cursor, OpenCode |
+- [Installation](#installation)
+  - [Node.js Prerequisites](#nodejs-prerequisites)
+  - [Claude Code](#claude-code)
+  - [Cursor](#cursor)
+  - [Codex](#codex)
+  - [OpenCode](#opencode)
+  - [Manual MCP Config](#manual-mcp-config)
+- [Quick Start](#quick-start)
+- [How It Works](#how-it-works)
+- [MCP Server Setup](#mcp-server-setup)
+- [MCP Tools Reference](#mcp-tools-reference)
+  - [Core Navigation & Analysis](#core-navigation--analysis)
+  - [Semantic Analysis](#semantic-analysis)
+  - [Memory System](#memory-system)
+  - [Knowledge Graph](#knowledge-graph)
+  - [Event System](#event-system)
+  - [Planner Engine](#planner-engine)
+  - [Self-Healing](#self-healing)
+  - [Multi-Browser](#multi-browser)
+  - [Agent Coordination](#agent-coordination)
+- [CLI Commands](#cli-commands)
+- [Skills Guide](#skills-guide)
+- [Architecture](#architecture)
+- [Troubleshooting](#troubleshooting)
+- [Requirements](#requirements)
+- [License](#license)
 
 ---
 
-## ⚡ Quick Start
+## Installation
 
-### 1. Installation
+### Node.js Prerequisites
 
 ```bash
+# Install Node.js 22+
+node --version  # Should be >= 22
+
+# Install BrowserIR
 npm install @browserir/core
+
+# Or globally
+npm install -g @browserir/core
 ```
 
-### 2. Start Daemon
+### Claude Code
 
-```bash
-node dist/daemon/server.js
-# or: bir daemon start
+#### Official Marketplace
+
+```
+/plugin install browserir@claude-plugins-official
 ```
 
-### 3. Analyze any web page via CLI
+#### Manual MCP Config
 
-```bash
-bir explain https://example.com
-```
-
-**Output:**
-```yaml
-Semantic Analysis Complete
-
-Page: Example Domain
-URL: https://example.com/
-Intent: content_consumption (navigation)
-
-Components:
-  [content] Main Content
-    - More information (link) [@e1]
-
-Metadata:
-  A11y Tree: yes
-  React Fiber: no
-  DOM Size: 12 nodes
-```
-
----
-
-## 🛠️ Usage Modes
-
-### Mode 1: MCP Server (for AI Assistants / LLMs)
-Add BrowserIR to your MCP config (`claude_desktop_config.json`, Cursor, OpenCode, Antigravity):
+Create or edit `.mcp.json` in your project root:
 
 ```json
 {
@@ -77,35 +75,191 @@ Add BrowserIR to your MCP config (`claude_desktop_config.json`, Cursor, OpenCode
 }
 ```
 
-#### Core MCP Tools (30 Tools Total):
-- `bir_explain` — Analyze web page and return BrowserIR
-- `bir_analyze` — Create a BrowserSession for analysis and interaction
-- `bir_click` — Click element by ref (e.g. `@e3`) with self-healing
-- `bir_navigate` — Navigate to URL
-- `bir_screenshot` — Capture screenshot
-- `bir_diff_compare` — Compare two BrowserIR snapshots semantically
-- `bir_flow_detect` — Detect multi-step processes (checkout, registration)
-- `bir_memory_recall` & `bir_memory_store` — Remember domain patterns
-- `bir_heal_find` — Automatically fix broken CSS selectors
-- `bir_planner_create` & `bir_planner_execute` — General task planning
+### Cursor
 
-### Mode 2: TypeScript / Node.js SDK
+- In Cursor Agent chat, install from marketplace:
+  ```
+  /add-plugin browserir
+  ```
+- Or search for "browserir" in the plugin marketplace.
 
-```typescript
-import { BrowserSession, explain, analyze } from '@browserir/core'
+### Codex
 
-// Quick analysis
-const ir = await explain('https://example.com')
-console.log('Intent:', ir.page.intent.primary)
+Available via the official Codex plugin marketplace.
 
-// Interactive session
-const session = await analyze('https://example.com')
-console.log(await session.graph())
+#### Codex App
 
-await session.click('@e1')
+- In the Codex app, click on **Plugins** in the sidebar.
+- Search for `BrowserIR` in the Browser section.
+- Click the `+` next to BrowserIR and follow the prompts.
+
+#### Codex CLI
+
+```
+/plugins
 ```
 
-### Mode 3: CLI Commands Cheat Sheet
+Search for BrowserIR and select `Install Plugin`.
+
+### OpenCode
+
+OpenCode uses its own plugin install. The plugin auto-registers the MCP server and all skills — no manual MCP config needed.
+
+Add to your `opencode.json`:
+
+```json
+{
+  "plugin": ["browserir@git+https://github.com/sukirman1901/BrowserIR.git"]
+}
+```
+
+Restart OpenCode. The plugin auto-registers the MCP server, skills directory, and bootstrap context.
+
+### Manual MCP Config
+
+For platforms that don't auto-register the MCP server, add the MCP server to your platform's MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "bir": {
+      "command": "node",
+      "args": ["/path/to/BrowserIR/dist/adapters/mcp/index.js"]
+    }
+  }
+}
+```
+
+---
+
+## Quick Start
+
+After installation, verify it works by asking your agent:
+
+> "analyze https://example.com"
+> "detect flows on this page"
+> "run E2E tests on this page"
+
+The AI will automatically load the right skill and use the MCP tools.
+
+### Example Session
+
+**User:** "Analyze https://nusaiba.dev"
+
+The AI will:
+
+1. Load `bir` skill → call `bir_explain`
+2. Get semantic IR with intent, components, risks
+3. Present findings with recommendations
+
+---
+
+## How It Works
+
+1. You ask something like *"analyze https://example.com"*
+2. The AI detects the intent → matches the **bir** skill
+3. The skill provides a methodology (step-by-step guide)
+4. The AI calls MCP tools like `bir_explain`, `bir_click`, `bir_flow_detect`
+5. Results are analyzed and presented
+
+The AI follows a semantic understanding methodology: **Explain → Analyze → Interact → Test → Learn**
+
+---
+
+## MCP Server Setup
+
+The BrowserIR MCP server provides 30 tools via stdio transport using TypeScript.
+
+### Verify MCP Server
+
+```bash
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node dist/adapters/mcp/index.js
+```
+
+Expected: 30 tools listed.
+
+---
+
+## MCP Tools Reference
+
+### Core Navigation & Analysis
+
+| Tool | Description |
+|------|-------------|
+| `bir_navigate` | Navigate to URL and return status |
+| `bir_explain` | Analyze page and return semantic BrowserIR |
+| `bir_analyze` | Create a BrowserSession for analysis and interaction |
+| `bir_click` | Click element by ref (@e1, @e2, ...) with self-healing |
+| `bir_screenshot` | Take screenshot of current page |
+| `bir_graph` | Get page structure as tree graph |
+| `bir_tabs` | List all browser tabs |
+| `bir_status` | Check daemon status |
+
+### Semantic Analysis
+
+| Tool | Description |
+|------|-------------|
+| `bir_flow_detect` | Detect multi-step flows from captured events |
+| `bir_flow_list` | List known flows for a domain |
+| `bir_diff_compare` | Compare two BrowserIR snapshots semantically |
+
+### Memory System
+
+| Tool | Description |
+|------|-------------|
+| `bir_memory_recall` | Recall learned knowledge about a domain |
+| `bir_memory_store` | Store BrowserIR knowledge about a domain |
+
+### Knowledge Graph
+
+| Tool | Description |
+|------|-------------|
+| `bir_knowledge_add_node` | Add node to knowledge graph |
+| `bir_knowledge_add_edge` | Add edge between knowledge nodes |
+| `bir_knowledge_search` | Search knowledge graph by label or type |
+| `bir_knowledge_traverse` | Traverse graph from starting node |
+
+### Event System
+
+| Tool | Description |
+|------|-------------|
+| `bir_events_capture` | Capture custom event into event stream |
+| `bir_events_get` | Query captured events for a session |
+
+### Planner Engine
+
+| Tool | Description |
+|------|-------------|
+| `bir_planner_create` | Create execution plan for a goal |
+| `bir_planner_execute` | Execute a plan by ID |
+| `bir_planner_status` | Get status of a plan |
+
+### Self-Healing
+
+| Tool | Description |
+|------|-------------|
+| `bir_heal_find` | Find replacement for broken selector using semantic IR |
+
+### Multi-Browser
+
+| Tool | Description |
+|------|-------------|
+| `bir_multi_create_session` | Create new multi-browser session |
+| `bir_multi_execute` | Execute task across multiple tabs |
+| `bir_multi_sessions` | List all multi-browser sessions |
+
+### Agent Coordination
+
+| Tool | Description |
+|------|-------------|
+| `bir_agent_register` | Register agent for coordination |
+| `bir_agent_unregister` | Unregister agent |
+| `bir_agent_claim` | Claim work on specific action |
+| `bir_agent_graph` | Show agent dependency graph |
+
+---
+
+## CLI Commands
 
 ```bash
 bir explain <url>              # Get semantic IR of a page
@@ -119,62 +273,94 @@ bir memory store <json>        # Store domain knowledge
 bir status                     # Check daemon status
 ```
 
-### Mode 4: REST API & WebSockets
+---
 
-When the daemon is running:
-- **REST API**: `http://localhost:3081` (e.g. `POST /navigate`, `GET /explain`)
-- **WebSocket**: `ws://localhost:3080` (Real-time event feed)
+## Skills Guide
+
+The plugin includes methodology skills that guide the AI through structured browser analysis:
+
+| Skill | Triggers When User Says... |
+|-------|---------------------------|
+| `bir` | "analyze", "explain", "understand", "browser" |
+| `bir-testing` | "test", "E2E", "assertion", "verify" |
+| `bir-debugging` | "debug", "error", "console", "network" |
+| `bir-content` | "read", "article", "documentation", "docs" |
+
+Skills load automatically via intent detection. The AI follows the skill's methodology step by step.
 
 ---
 
-## 🌟 Key Features
+## Architecture
 
-### Semantic Understanding
-- 🧠 **Semantic Analysis**: Classifies page intent with 20+ categories (authentication, purchase, documentation, tutorial, blog, api_reference, forum, chat, dashboard, settings, profile, checkout, payment, subscription, support, feedback, contact, social, media, download).
-- 🏷️ **Deterministic Refs (`@e1`, `@e2`)**: Click elements without fragile CSS selectors.
-- 🏷️ **38 Component Types**: Rich component detection (button, link, field, modal, tooltip, accordion, tabs, code_block, video, audio, embed, form, dialog, etc.).
-- ⚠ **Risk Assessment**: Critical severity detection for credentials, financial data, PII, destructive actions. Compliance checks (GDPR, PCI, HIPAA, SOC2, CCPA).
-- 🔄 **Flow Detection**: Multi-source detection (structure, events, network) + flow templates + learning.
-- 🧠 **Knowledge Graph**: SPARQL-like queries for semantic relationships.
-
-### Content Reading
-- 📖 **Universal Content Reader**: Extract semantic meaning from articles, docs, API docs, blogs.
-- 📚 **Documentation Parser**: Parse documentation structure, navigation, code examples, API endpoints.
-- 🛡 **Stealth Manager**: Anti-detection (webdriver, chrome, permissions, plugins, languages spoofing).
-
-### Self-Healing
-- 🩹 **8 Healing Strategies**: History, text match, ARIA match, semantic match, memory match, visual match, context match, position match.
-- 📈 **Selector Learning**: Track success rates, top selectors, patterns per domain.
-
-### Testing
-- 🧪 **E2E Testing**: 22 assertion types (element, text, intent, component, URL, cookie, storage, network, visual, performance, accessibility).
-- 📊 **Test Reports**: Comprehensive HTML (dark theme) + JSON reports with metrics.
-- 🔄 **Failure Analysis Loop**: Test → fail → debug (network/console/errors) → fix → retest.
-
-### Browser Automation
-- 🔄 **Self-Healing**: 8 strategies + history learning.
-- 🔌 **Network Capture**: Intercept and log HTTP requests/responses.
-- 📟 **Console & Error Capture**: Auto-capture browser console logs and JS runtime errors.
-- 💉 **Script Injection**: Inject JavaScript before page load for mocking/testing.
-- 🍪 **Cookie/Storage Management**: Setup and verify app state (cookies, localStorage).
-- 🔦 **Element Highlight**: Visual debugging with colored outlines.
-- ⌨️ **Input Manager**: Mouse, keyboard, dialog handling, frame switching.
-- 📁 **File Manager**: Download, upload, PDF export.
-
-### Session & Security
-- 💾 **Session Memory**: Persistent patterns, selectors, flows, errors, performance.
-- 🧠 **Memory Learning**: Learn from success/failure, predict next actions, suggest fixes.
-- 👥 **Multi-Browser**: Pool management, warmup, parallel execution, idle cleanup.
-- 🔒 **Security Manager**: Domain allowlisting, offline mode, headers, credentials, output truncation.
-- 💾 **Session Manager**: Idle timeout, auto-save, state expiration, encryption (AES-256).
-
-### Infrastructure
-- 📊 **Dashboard**: Real-time semantic analysis monitoring with SSE (port 4848).
-- 🎯 **General Planner**: Pattern matching for navigation, auth, search, purchase tasks.
-- 🔄 **Flow Templates**: Built-in templates for login, registration, checkout, search.
+```
+┌─────────────────────────────────────────────────────┐
+│                  AI Tool (any)                       │
+│           Claude / Cursor / OpenCode / Codex         │
+└───────────────────────┬─────────────────────────────┘
+                        │ MCP or CLI
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│                  BrowserIR                           │
+│            Semantic Understanding Engine             │
+├─────────────────────────────────────────────────────┤
+│  • explain() → BrowserIR (intent, flow, risk)        │
+│  • memory → learned patterns                         │
+│  • flow → multi-step detection                       │
+│  • diff → change tracking                            │
+│  • agent → multi-agent coordination                  │
+└───────────────────────┬─────────────────────────────┘
+                        │ Playwright/CDP
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│             Browser (Chrome/Firefox/WebKit)          │
+└─────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 📄 License
+## Troubleshooting
 
-MIT © [BrowserIR](https://github.com/sukirman1901/BrowserIR)
+### MCP Server not found
+
+```bash
+# Verify MCP server works
+node dist/adapters/mcp/index.js
+# Should start a stdio MCP server — test with:
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node dist/adapters/mcp/index.js
+```
+
+Expected output: 30 tools listed.
+
+### OpenCode plugin not loading
+
+1. Check `opencode.json` for the plugin line
+2. Restart OpenCode
+3. Check logs
+
+### Claude Code plugin not loading
+
+1. Check `.mcp.json` MCP server config
+2. Restart Claude Code
+3. Verify: `/plugin list` should show browserir
+
+### Build errors
+
+```bash
+npm run build
+# If errors, check Node.js version >= 22
+node --version
+```
+
+---
+
+## Requirements
+
+- **Node.js 22+**
+- **Playwright** (auto-installed)
+- Any supported AI coding agent (Claude Code, Cursor, Codex, OpenCode)
+
+---
+
+## License
+
+MIT License - see LICENSE file for details.

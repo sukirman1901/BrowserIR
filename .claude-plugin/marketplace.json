@@ -1,0 +1,27 @@
+{
+  "name": "browserir",
+  "displayName": "BrowserIR",
+  "description": "Semantic browser understanding engine for AI agents — 23 capabilities, 30 MCP tools, TypeScript",
+  "version": "0.1.0",
+  "author": {
+    "name": "BrowserIR Team",
+    "url": "https://github.com/sukirman1901/BrowserIR"
+  },
+  "keywords": ["browser", "semantic", "ir", "web", "automation", "testing", "ai", "playwright"],
+  "category": "browser-automation",
+  "pricing": "free",
+  "repository": "https://github.com/sukirman1901/BrowserIR",
+  "homepage": "https://github.com/sukirman1901/BrowserIR",
+  "capabilities": [
+    "semantic-analysis",
+    "content-reading",
+    "self-healing",
+    "e2e-testing",
+    "flow-detection",
+    "memory-system",
+    "multi-browser",
+    "network-capture",
+    "stealth",
+    "security"
+  ]
+}
