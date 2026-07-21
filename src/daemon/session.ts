@@ -240,7 +240,8 @@ export class BrowserSession {
 
   async captureScreenshot(): Promise<string> {
     if (!this.page) throw new Error('Session not started')
-    return this.visualDiffEngine.captureScreenshot(this.page)
+    const buffer = await this.visualDiffEngine.captureScreenshot(this.page)
+    return buffer.toString('base64')
   }
 
   async visualDiff(url1: string, url2: string): Promise<VisualDiffResult> {
