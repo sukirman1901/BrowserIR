@@ -12,6 +12,20 @@ Raw HTML → BrowserIR → Semantic Tree (sections, components, intent, flow, ri
 
 **Key insight:** BrowserIR doesn't just "see" the page — it "understands" what the page is for, what actions are available, and what risks exist.
 
+## Core Capabilities (23)
+
+1. **Semantic Analysis** — 20+ intent categories, 38 component types
+2. **Risk Assessment** — Critical severity, compliance checks (GDPR, PCI, HIPAA, SOC2, CCPA)
+3. **Flow Detection** — Multi-source (structure, events, network) + templates + learning
+4. **Self-Healing** — 8 strategies + selector learning
+5. **Content Reading** — Universal reader for articles, docs, API docs, blogs
+6. **Stealth** — Anti-detection (webdriver, chrome, permissions, plugins, languages)
+7. **Security** — Domain allowlisting, encryption (AES-256), output truncation
+8. **E2E Testing** — 22 assertion types + HTML/JSON reports
+9. **Memory** — Patterns, selectors, flows, errors, performance + learning
+10. **Multi-Browser** — Pool management, parallel execution, idle cleanup
+11. **Dashboard** — Real-time SSE monitoring (port 4848)
+
 ## Quick Start
 
 ### Start daemon

@@ -129,27 +129,49 @@ When the daemon is running:
 
 ## 🌟 Key Features
 
-- 🧠 **Semantic Analysis**: Classifies page intent (`authentication`, `purchase`, `search`, etc.).
+### Semantic Understanding
+- 🧠 **Semantic Analysis**: Classifies page intent with 20+ categories (authentication, purchase, documentation, tutorial, blog, api_reference, forum, chat, dashboard, settings, profile, checkout, payment, subscription, support, feedback, contact, social, media, download).
 - 🏷️ **Deterministic Refs (`@e1`, `@e2`)**: Click elements without fragile CSS selectors.
-- 🩹 **Self-Healing Selectors**: Automatically repairs broken selectors with 3 strategies (text, role, position) + history learning.
-- 💾 **Domain Memory**: Learns domain patterns and stores them in persistent SQLite.
-- 👥 **Multi-Agent & Multi-Tab**: Coordinate multiple AI agents on the same page.
-- ⚠ **Risk Assessment**: Warns before performing irreversible or sensitive actions.
-- 🔄 **Flow Detection**: Detects login, checkout, search, registration flows from page structure.
-- 🧪 **E2E Testing**: Run JSON-based test cases with retries, parallel execution, HTML reports.
-- 🖼 **Visual Debugging**: Screenshot capture and pixelmatch visual diff comparison.
-- 🎯 **General Planner**: Pattern matching for navigation, auth, search, purchase tasks.
-- 🔌 **Network Capture**: Intercept and log HTTP requests/responses for debugging.
+- 🏷️ **38 Component Types**: Rich component detection (button, link, field, modal, tooltip, accordion, tabs, code_block, video, audio, embed, form, dialog, etc.).
+- ⚠ **Risk Assessment**: Critical severity detection for credentials, financial data, PII, destructive actions. Compliance checks (GDPR, PCI, HIPAA, SOC2, CCPA).
+- 🔄 **Flow Detection**: Multi-source detection (structure, events, network) + flow templates + learning.
+- 🧠 **Knowledge Graph**: SPARQL-like queries for semantic relationships.
+
+### Content Reading
+- 📖 **Universal Content Reader**: Extract semantic meaning from articles, docs, API docs, blogs.
+- 📚 **Documentation Parser**: Parse documentation structure, navigation, code examples, API endpoints.
+- 🛡 **Stealth Manager**: Anti-detection (webdriver, chrome, permissions, plugins, languages spoofing).
+
+### Self-Healing
+- 🩹 **8 Healing Strategies**: History, text match, ARIA match, semantic match, memory match, visual match, context match, position match.
+- 📈 **Selector Learning**: Track success rates, top selectors, patterns per domain.
+
+### Testing
+- 🧪 **E2E Testing**: 22 assertion types (element, text, intent, component, URL, cookie, storage, network, visual, performance, accessibility).
+- 📊 **Test Reports**: Comprehensive HTML (dark theme) + JSON reports with metrics.
+- 🔄 **Failure Analysis Loop**: Test → fail → debug (network/console/errors) → fix → retest.
+
+### Browser Automation
+- 🔄 **Self-Healing**: 8 strategies + history learning.
+- 🔌 **Network Capture**: Intercept and log HTTP requests/responses.
 - 📟 **Console & Error Capture**: Auto-capture browser console logs and JS runtime errors.
 - 💉 **Script Injection**: Inject JavaScript before page load for mocking/testing.
 - 🍪 **Cookie/Storage Management**: Setup and verify app state (cookies, localStorage).
 - 🔦 **Element Highlight**: Visual debugging with colored outlines.
-- 🔄 **Failure Analysis Loop**: Test → fail → debug (network/console/errors) → fix → retest.
-- 🔒 **Security Manager**: Domain allowlisting, offline mode, headers, credentials.
 - ⌨️ **Input Manager**: Mouse, keyboard, dialog handling, frame switching.
 - 📁 **File Manager**: Download, upload, PDF export.
-- 💾 **Session Manager**: Idle timeout, auto-save, state expiration, encryption.
-- 📊 **Dashboard**: Real-time semantic analysis monitoring (port 4848).
+
+### Session & Security
+- 💾 **Session Memory**: Persistent patterns, selectors, flows, errors, performance.
+- 🧠 **Memory Learning**: Learn from success/failure, predict next actions, suggest fixes.
+- 👥 **Multi-Browser**: Pool management, warmup, parallel execution, idle cleanup.
+- 🔒 **Security Manager**: Domain allowlisting, offline mode, headers, credentials, output truncation.
+- 💾 **Session Manager**: Idle timeout, auto-save, state expiration, encryption (AES-256).
+
+### Infrastructure
+- 📊 **Dashboard**: Real-time semantic analysis monitoring with SSE (port 4848).
+- 🎯 **General Planner**: Pattern matching for navigation, auth, search, purchase tasks.
+- 🔄 **Flow Templates**: Built-in templates for login, registration, checkout, search.
 
 ---
 

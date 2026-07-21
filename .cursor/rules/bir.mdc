@@ -3,13 +3,18 @@
 Use this skill when the user wants to:
 - **Understand** what a web page is for (intent, purpose, meaning)
 - **Analyze** page structure semantically (sections, components, hierarchy)
+- **Read** any web content (articles, docs, API docs, blogs)
 - **Test** web UIs with semantic understanding
 - **Compare** page versions (diff)
 - **Learn** about websites (memory)
 - **Detect** multi-step flows (checkout, registration, etc.)
 - **Coordinate** multiple agents working on the same page
-- **Heal** broken selectors automatically
-- **Run** multi-browser sessions
+- **Heal** broken selectors automatically (8 strategies)
+- **Run** multi-browser sessions with pool management
+- **Stealth** browse without detection
+- **Secure** with domain allowlisting and encryption
+- **Input** with mouse, keyboard, dialogs, frames
+- **Download/Upload** files and export PDFs
 
 ## MCP Tools (30 tools)
 

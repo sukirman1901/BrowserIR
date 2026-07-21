@@ -5,29 +5,48 @@
 Use this skill when the user wants to:
 - **Understand** what a web page is for (intent, purpose, meaning)
 - **Analyze** page structure semantically (sections, components, hierarchy)
+- **Read** any web content (articles, docs, API docs, blogs)
 - **Test** web UIs with semantic understanding
 - **Compare** page versions (diff)
 - **Learn** about websites (memory)
 - **Detect** multi-step flows (checkout, registration, etc.)
 - **Coordinate** multiple agents working on the same page
-- **Heal** broken selectors automatically
-- **Run** multi-browser sessions
+- **Heal** broken selectors automatically (8 strategies)
+- **Run** multi-browser sessions with pool management
+- **Stealth** browse without detection
+- **Secure** with domain allowlisting and encryption
+- **Input** with mouse, keyboard, dialogs, frames
+- **Download/Upload** files and export PDFs
 
 ## What This Skill Does
 
-BrowserIR compiles web pages into **semantic intermediate representations (IR)** — typed structures that AI can reason about.
+BrowserIR compiles web pages into **semantic intermediate representations (IR)** — typed structures that AI can reason about. It's a **semantic understanding engine**, not just browser automation.
 
-### Key Capabilities
+### Key Capabilities (23)
 
-1. **Semantic Analysis** — Understands page purpose, not just DOM
-2. **Intent Recognition** — Classifies page type (auth, purchase, search, etc.)
-3. **Risk Assessment** — Warns about destructive actions
-4. **Flow Detection** — Identifies multi-step processes
-5. **Memory System** — Learns from past interactions
+1. **Semantic Analysis** — Understands page purpose with 20+ intent categories
+2. **Intent Recognition** — Classifies page type (auth, purchase, documentation, tutorial, blog, api, forum, chat, dashboard, settings, profile, checkout, payment, subscription, support, feedback, contact, social, media, download)
+3. **Risk Assessment** — Critical severity detection for credentials, financial, PII, destructive actions. Compliance checks (GDPR, PCI, HIPAA, SOC2, CCPA)
+4. **Flow Detection** — Multi-source detection (structure, events, network) + flow templates + learning
+5. **Memory System** — Learns from past interactions (patterns, selectors, flows, errors, performance)
 6. **Evidence Chains** — Explains WHY it thinks something is what it is
-7. **Self-Healing** — Automatically fixes broken selectors
-8. **Multi-Browser** — Coordinates multiple tabs/sessions
-9. **Agent Coordination** — Multiple AI agents can work together
+7. **Self-Healing** — 8 strategies (history, text, ARIA, semantic, memory, visual, context, position) + learning
+8. **Multi-Browser** — Pool management, warmup, parallel execution, idle cleanup
+9. **Agent Coordination** — Multiple AI agents can work together (persistent)
+10. **Network Capture** — Intercept and log HTTP requests/responses
+11. **Console & Error Capture** — Auto-capture browser console logs and JS errors
+12. **Script Injection** — Inject JavaScript before page load for mocking
+13. **Cookie/Storage Management** — Setup and verify app state
+14. **Element Highlight** — Visual debugging with colored outlines
+15. **Failure Analysis Loop** — Test → fail → debug → fix → retest
+16. **Content Extractor** — Universal reader for articles, docs, API docs, blogs
+17. **Doc Parser** — Parse documentation structure, navigation, code examples
+18. **Stealth Manager** — Anti-detection (webdriver, chrome, permissions, plugins, languages)
+19. **Security Manager** — Domain allowlisting, offline mode, headers, credentials, truncation
+20. **Input Manager** — Mouse, keyboard, dialog handling, frame switching
+21. **File Manager** — Download, upload, PDF export
+22. **Session Manager** — Idle timeout, auto-save, state expiration, encryption (AES-256)
+23. **Dashboard** — Real-time semantic analysis monitoring with SSE (port 4848)
 
 ---
 
