@@ -1,5 +1,11 @@
 import type { BrowserIR, ComponentIR } from '../ir/types.js'
 
+export interface FlowSource {
+  type: 'structure' | 'events' | 'network'
+  confidence: number
+  data: any
+}
+
 export interface DetectedFlow {
   name: string
   steps: Array<{
@@ -179,5 +185,78 @@ export class FlowDetector {
     const result: ComponentIR[] = []
     for (const s of ir.page.sections) for (const c of s.components) if (pattern.test(c.label)) result.push(c)
     return result
+  }
+
+  async detectFromNetwork(networkLogs: Array<{url: string; method: string; status: number}>): Promise<DetectedFlow[]> {
+    const flows: DetectedFlow[] = []
+    const apiPatterns = this.analyzeNetworkPatterns(networkLogs)
+    for (const pattern of apiPatterns) {
+      flows.push(pattern)
+    }
+    return flows
+  }
+
+  async detectFromEvents(events: Array<{type: string; target?: string; data?: any}>): Promise<DetectedFlow[]> {
+    const flows: DetectedFlow[] = []
+
+    const clickSequences = events.filter(e => e.type === 'click')
+    if (clickSequences.length > 2) {
+      flows.push({
+        name: 'Click Sequence Flow',
+        steps: clickSequences.map((e, i) => ({
+          order: i + 1,
+          action: `click ${e.target || 'element'}`,
+          required: true
+        })),
+        confidence: 0.7
+      })
+    }
+
+    const formFills = events.filter(e => e.type === 'input')
+    if (formFills.length > 0) {
+      flows.push({
+        name: 'Form Fill Flow',
+        steps: formFills.map((e, i) => ({
+          order: i + 1,
+          action: `fill ${e.target || 'field'}`,
+          required: true
+        })),
+        confidence: 0.8
+      })
+    }
+
+    return flows
+  }
+
+  private analyzeNetworkPatterns(logs: Array<{url: string; method: string; status: number}>): DetectedFlow[] {
+    const flows: DetectedFlow[] = []
+
+    const apiCalls = logs.filter(l => l.method !== 'GET')
+    if (apiCalls.length > 0) {
+      flows.push({
+        name: 'API Interaction Flow',
+        steps: apiCalls.map((l, i) => ({
+          order: i + 1,
+          action: `${l.method} ${l.url}`,
+          required: true
+        })),
+        confidence: 0.85
+      })
+    }
+
+    const navigations = logs.filter(l => l.url && !l.url.includes('.js') && !l.url.includes('.css'))
+    if (navigations.length > 2) {
+      flows.push({
+        name: 'Navigation Flow',
+        steps: navigations.slice(0, 5).map((l, i) => ({
+          order: i + 1,
+          action: `navigate to ${l.url}`,
+          required: true
+        })),
+        confidence: 0.75
+      })
+    }
+
+    return flows
   }
 }
