@@ -2,6 +2,12 @@ import { chromium, Browser, BrowserContext, Page } from 'playwright'
 import type { BrowserIR } from '../ir/types.js'
 import { ExplainEngine } from '../engines/explain.js'
 import { VisualDiffEngine, type VisualDiffResult } from '../engines/visual-diff.js'
+import { ContentExtractor } from '../engines/content-extractor.js'
+import type { ContentResult } from '../engines/content-types.js'
+import { DocParser } from '../engines/doc-parser.js'
+import type { DocStructure } from '../engines/doc-parser.js'
+import { StealthManager } from '../engines/stealth-manager.js'
+import type { StealthConfig } from '../engines/stealth-manager.js'
 
 export interface SessionOptions {
   headless?: boolean
@@ -294,5 +300,23 @@ export class BrowserSession {
     const page = await this.context.newPage()
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 })
     this.page = page
+  }
+
+  async readContent(): Promise<ContentResult> {
+    if (!this.page) throw new Error('Session not started')
+    const extractor = new ContentExtractor(this.page)
+    return extractor.extract()
+  }
+
+  async parseDocs(): Promise<DocStructure> {
+    if (!this.page) throw new Error('Session not started')
+    const parser = new DocParser(this.page)
+    return parser.parse()
+  }
+
+  async enableStealth(config?: Partial<StealthConfig>): Promise<void> {
+    if (!this.context) throw new Error('Session not started')
+    const stealth = new StealthManager(config)
+    await stealth.apply(this.context)
   }
 }
