@@ -86,6 +86,27 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
+
+-- Phase 3b: Multi-Agent Persistence
+CREATE TABLE IF NOT EXISTS agents (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'idle',
+  last_action TEXT,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS agent_actions (
+  id TEXT PRIMARY KEY,
+  agent_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  target TEXT,
+  value TEXT,
+  timestamp INTEGER NOT NULL,
+  FOREIGN KEY (agent_id) REFERENCES agents(id)
+);
 `;
 
 export const INDEXES_SQL = `
@@ -106,4 +127,9 @@ CREATE INDEX IF NOT EXISTS idx_knowledge_edges_type ON knowledge_edges(type);
 CREATE INDEX IF NOT EXISTS idx_plans_status ON plans(status);
 CREATE INDEX IF NOT EXISTS idx_plans_goal ON plans(goal);
 CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
+CREATE INDEX IF NOT EXISTS idx_agents_session ON agents(session_id);
+CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
+CREATE INDEX IF NOT EXISTS idx_agent_actions_agent ON agent_actions(agent_id);
+CREATE INDEX IF NOT EXISTS idx_agent_actions_type ON agent_actions(type);
+CREATE INDEX IF NOT EXISTS idx_agent_actions_timestamp ON agent_actions(timestamp);
 `;

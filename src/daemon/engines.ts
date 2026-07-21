@@ -41,6 +41,6 @@ export class EngineManager {
       this.flow
     )
     this.multi = new MultiBrowserEngine()
-    this.agent = new AgentCoordinator()
+    this.agent = new AgentCoordinator(db)
   }
 }

@@ -1,5 +1,6 @@
 // bir/src/engines/agent.ts
-import type { BrowserIR } from '../ir/types.js'
+import type Database from 'better-sqlite3'
+import { randomUUID } from 'crypto'
 
 export interface Agent {
   id: string
@@ -27,7 +28,7 @@ export interface AgentGraph {
 }
 
 export interface SharedPageState {
-  currentIR: BrowserIR
+  currentIR: any
   lastUpdated: number
   version: number
 }
@@ -40,22 +41,78 @@ export interface AgentConflict {
 }
 
 export class AgentCoordinator {
-  private agents = new Map<string, Agent>()
-  private actions: AgentAction[] = []
+  private stmts: {
+    insertAgent: Database.Statement
+    getAgent: Database.Statement
+    updateAgent: Database.Statement
+    deleteAgent: Database.Statement
+    insertAction: Database.Statement
+    getRecentActions: Database.Statement
+  }
   private conflictsList: AgentConflict[] = []
   private sharedState: SharedPageState | null = null
 
+  constructor(private db: Database.Database) {
+    this.stmts = {
+      insertAgent: db.prepare(`
+        INSERT INTO agents (id, name, role, session_id, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `),
+      getAgent: db.prepare('SELECT * FROM agents WHERE id = ?'),
+      updateAgent: db.prepare('UPDATE agents SET status = ?, last_action = ? WHERE id = ?'),
+      deleteAgent: db.prepare('DELETE FROM agents WHERE id = ?'),
+      insertAction: db.prepare(`
+        INSERT INTO agent_actions (id, agent_id, type, target, value, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `),
+      getRecentActions: db.prepare(`
+        SELECT * FROM agent_actions WHERE agent_id = ? ORDER BY timestamp DESC LIMIT 10
+      `),
+    }
+  }
+
   async registerAgent(agent: Omit<Agent, 'createdAt'>): Promise<Agent> {
-    const full: Agent = { ...agent, createdAt: Date.now() }
-    this.agents.set(agent.id, full)
-    return full
+    const now = Date.now()
+    this.stmts.insertAgent.run(agent.id, agent.name, agent.role, agent.sessionId, agent.status, now)
+    return { ...agent, createdAt: now }
   }
 
   async unregisterAgent(id: string): Promise<void> {
-    this.agents.delete(id)
+    // Delete associated actions first to avoid FOREIGN KEY constraint
+    this.db.prepare('DELETE FROM agent_actions WHERE agent_id = ?').run(id)
+    this.stmts.deleteAgent.run(id)
   }
 
-  async updateSharedState(ir: BrowserIR): Promise<SharedPageState> {
+  async claimAction(action: AgentAction): Promise<{ allowed: boolean; reason?: string }> {
+    // Check for conflicting actions in last 5 seconds
+    const recent = this.db.prepare(`
+      SELECT * FROM agent_actions 
+      WHERE agent_id != ? AND type = ? AND target = ? AND timestamp > ?
+      ORDER BY timestamp DESC LIMIT 1
+    `).all(action.agentId, action.type, action.target, Date.now() - 5000) as any[]
+
+    if (recent.length > 0) {
+      const conflictEntry: AgentConflict = {
+        agentA: recent[0].agent_id,
+        agentB: action.agentId,
+        action,
+        resolution: 'wait',
+      }
+      this.conflictsList.push(conflictEntry)
+      return { allowed: false, reason: `Conflicting action by agent ${recent[0].agent_id}` }
+    }
+
+    // Record action
+    const id = randomUUID()
+    this.stmts.insertAction.run(id, action.agentId, action.type, action.target, action.value, action.timestamp)
+    
+    // Update agent status
+    this.stmts.updateAgent.run('working', JSON.stringify(action), action.agentId)
+    
+    return { allowed: true }
+  }
+
+  async updateSharedState(ir: any): Promise<SharedPageState> {
     const currentVersion = this.sharedState ? this.sharedState.version + 1 : 1
     this.sharedState = {
       currentIR: ir,
@@ -65,49 +122,19 @@ export class AgentCoordinator {
     return this.sharedState
   }
 
-  async claimAction(action: AgentAction): Promise<{ allowed: boolean; reason?: string }> {
-    const recent = this.actions.slice(-10)
-    const conflict = recent.find(a => 
-      a.agentId !== action.agentId && 
-      a.type === action.type && 
-      a.target === action.target &&
-      Date.now() - a.timestamp < 5000
-    )
-    
-    if (conflict) {
-      const conflictEntry: AgentConflict = {
-        agentA: conflict.agentId,
-        agentB: action.agentId,
-        action,
-        resolution: 'wait',
-      }
-      this.conflictsList.push(conflictEntry)
-
-      // Update agent status
-      const ag = this.agents.get(action.agentId)
-      if (ag) {
-        ag.status = 'waiting'
-        ag.lastAction = action
-      }
-
-      return { allowed: false, reason: `Conflicting action by agent ${conflict.agentId}` }
-    }
-
-    // Update agent status on success
-    const ag = this.agents.get(action.agentId)
-    if (ag) {
-      ag.status = 'working'
-      ag.lastAction = action
-    }
-    
-    this.actions.push(action)
-    return { allowed: true }
-  }
-
   async getGraph(): Promise<AgentGraph> {
+    const agents = this.db.prepare('SELECT * FROM agents').all() as any[]
     return {
-      agents: Array.from(this.agents.values()),
-      sharedState: this.sharedState || { currentIR: null as any, lastUpdated: 0, version: 0 },
+      agents: agents.map(a => ({
+        id: a.id,
+        name: a.name,
+        role: a.role,
+        sessionId: a.session_id,
+        status: a.status,
+        lastAction: a.last_action ? JSON.parse(a.last_action) : undefined,
+        createdAt: a.created_at,
+      })),
+      sharedState: this.sharedState || { currentIR: null, lastUpdated: 0, version: 0 },
       conflicts: this.conflictsList,
     }
   }
