@@ -80,69 +80,71 @@ export class BrowserSession {
     const targetIndex = parseInt(match[1]) - 1
     const components = await this.getInteractiveComponents()
     if (targetIndex >= components.length) {
-      throw new Error(`Element ${ref} not found (only ${components.length} interactive elements)`)
+      throw new Error(`Element ${ref} not found (${components.length} interactive elements)`)
     }
     const target = components[targetIndex]
 
-    // Strategy 1: a11y role + aria-label selector
-    if (target.name && target.role) {
-      const selector = `[role="${target.role}"][aria-label="${CSS.escape(target.name)}"]`
-      try {
-        const el = await this.page.$(selector)
-        if (el) {
-          await el.click()
-          return
-        }
-      } catch {}
-    }
+    // Try direct click strategies first
+    try {
+      // Strategy 1: a11y role + name
+      const selector = `[role="${target.role}"][aria-label="${target.name}"]`
+      const els = await this.page.$$(selector)
+      if (els.length === 1) { await els[0].click(); return }
+      if (els.length > targetIndex) { await els[targetIndex].click(); return }
+    } catch {}
 
-    // Strategy 2: text content match
-    if (target.name) {
-      const clicked = await this.page.evaluate((name: string) => {
-        const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT)
-        while (walk.nextNode()) {
-          const el = walk.currentNode as HTMLElement
-          if (el.textContent?.trim() === name && typeof el.click === 'function') {
-            el.click()
-            return true
-          }
+    try {
+      // Strategy 2: text content
+      const clicked = await this.page.evaluate((name) => {
+        const els = document.querySelectorAll('button, a, input, [role="button"], [role="link"]')
+        for (const el of els) {
+          if (el.textContent?.trim() === name) { (el as HTMLElement).click(); return true }
         }
         return false
       }, target.name)
       if (clicked) return
-    }
+    } catch {}
 
-    // Strategy 3: position-based fallback
-    if (target.backendDOMNodeId) {
-      try {
-        const cdp = await (this.page.context().browser() as any)?.newBrowserCDPSession?.()
-        if (cdp) {
-          const { result } = await cdp.send('DOM.resolveNode', {
-            backendNodeId: target.backendDOMNodeId,
-          })
-          if (result?.object?.objectId) {
-            await cdp.send('Runtime.callFunctionOn', {
-              objectId: result.object.objectId,
-              functionDeclaration: 'function() { this.click(); }',
-            })
-            await cdp.detach()
-            return
-          }
-          await cdp.detach()
+    // Try self-healing
+    console.log(`Click failed for ${ref}, attempting self-healing...`)
+    const healed = await this.healAndClick(target.name, target.role, targetIndex)
+    if (healed) return
+
+    throw new Error(`Element ${ref} (${target.name}) not clickable`)
+  }
+
+  private async healAndClick(targetName: string, targetType: string, targetIndex: number): Promise<boolean> {
+    // Strategy 1: text match
+    try {
+      const clicked = await this.page!.evaluate((text) => {
+        const els = document.querySelectorAll('button, a, input, [role="button"], [role="link"]')
+        for (const el of els) {
+          if (el.textContent?.includes(text)) { (el as HTMLElement).click(); return true }
         }
-      } catch {}
-    }
+        return false
+      }, targetName)
+      if (clicked) return true
+    } catch {}
 
-    // Final fallback: position from accessibility tree
-    if (target.x !== undefined && target.y !== undefined) {
-      await this.page.mouse.click(
-        target.x + (target.width ?? 0) / 2,
-        target.y + (target.height ?? 0) / 2
-      )
-      return
-    }
+    // Strategy 2: type match
+    try {
+      const roleMap: Record<string, string> = { button: 'button', link: 'link', field: 'textbox' }
+      const role = roleMap[targetType] || targetType
+      const el = await this.page!.$(`[role="${role}"]`)
+      if (el) { await el.click(); return true }
+    } catch {}
 
-    throw new Error(`Element ${ref} not found (no strategy succeeded)`)
+    // Strategy 3: position fallback
+    try {
+      const clicked = await this.page!.evaluate((idx) => {
+        const els = document.querySelectorAll('button, a, input, [role="button"], [role="link"]')
+        if (idx < els.length) { (els[idx] as HTMLElement).click(); return true }
+        return false
+      }, targetIndex)
+      if (clicked) return true
+    } catch {}
+
+    return false
   }
 
   async getInteractiveComponents(): Promise<
