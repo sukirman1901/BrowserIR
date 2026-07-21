@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { RPCClient } from '../../daemon/transport.js'
-import type { BrowserIR, BrowserSession } from '../../browserIR/session.js'
-import { explain as explainImpl, analyze as analyzeImpl } from '../../browserIR/session.js'
+import type { BrowserIR } from '../../ir/types.js'
+import { explain as explainImpl, analyze as analyzeImpl, type BrowserSession } from '../../browserIR/session.js'
 
 let sharedClient: RPCClient | null = null
 let sessionStarted = false
@@ -190,7 +190,7 @@ export const knowledgeAddNodeTool = {
   inputSchema: {
     type: z.string().describe('Node type'),
     label: z.string().describe('Node label'),
-    properties: z.record(z.any()).optional().describe('Node properties'),
+    properties: z.record(z.string(), z.any()).optional().describe('Node properties'),
   },
   handler: async (params: { type: string; label: string; properties?: Record<string, any> }) => {
     return rpc('knowledge.addNode', params)
@@ -243,7 +243,7 @@ export const eventsCaptureTool = {
   inputSchema: {
     type: z.string().describe('Event type'),
     sessionId: z.string().describe('Session ID'),
-    data: z.record(z.any()).optional().describe('Event data payload'),
+    data: z.record(z.string(), z.any()).optional().describe('Event data payload'),
   },
   handler: async (params: { type: string; sessionId: string; data?: Record<string, any> }) => {
     return rpc('events.capture', params)
@@ -255,7 +255,7 @@ export const eventsGetTool = {
   description: 'Query captured events for a session.',
   inputSchema: {
     sessionId: z.string().describe('Session ID'),
-    query: z.record(z.any()).optional().describe('Filter query options'),
+    query: z.record(z.string(), z.any()).optional().describe('Filter query options'),
   },
   handler: async (params: { sessionId: string; query?: Record<string, any> }) => {
     return rpc('events.get', params)
