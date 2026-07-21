@@ -105,8 +105,8 @@ const handler: RPCHandler = async (
       ensureEngines()
       const domain = params?.domain as string
       if (!domain) throw new Error('domain required')
-      const entry = await state.engines!.memory.recall(domain)
-      return entry
+      const entries = await state.engines!.memory.recallByDomain(domain)
+      return entries.length > 0 ? entries[0] : null
     }
 
     case 'memory.store': {
@@ -251,7 +251,11 @@ const handler: RPCHandler = async (
       if (!planId) throw new Error('planId required')
       const plan = await state.engines!.planner.getPlan(planId)
       if (!plan) throw new Error(`Plan ${planId} not found`)
-      const result = await state.engines!.planner.executePlan(plan, state.session?.page)
+      let currentIR: any = null
+      if (state.session) {
+        try { currentIR = await state.session.explain() } catch {}
+      }
+      const result = await state.engines!.planner.executePlan(plan, state.session?.getPage(), currentIR)
       return result
     }
 

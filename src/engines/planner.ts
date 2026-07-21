@@ -23,7 +23,7 @@ export interface PlanStep {
   target?: string
   value?: string
   expectation: Expectation
-  status: 'pending' | 'done' | 'failed' | 'skipped'
+  status: 'pending' | 'executing' | 'done' | 'failed' | 'skipped'
   attempts: number
   maxAttempts: number
 }
@@ -89,12 +89,12 @@ export class PlannerEngine {
     return plan
   }
 
-  async executePlan(plan: Plan, page?: any): Promise<PlanResult> {
+  async executePlan(plan: Plan, page?: any, currentIR?: any): Promise<PlanResult> {
     plan.status = 'executing'
     plan.updatedAt = Date.now()
 
     for (const step of plan.steps) {
-      step.status = 'executing' as any
+      step.status = 'executing'
       try {
         await this.executeStep(step, page)
         step.status = 'done'
@@ -106,8 +106,16 @@ export class PlannerEngine {
         // Try self-healing fallback if target exists and page is present
         if (page && step.target) {
           try {
-            const currentUrl = page.url()
-            const healResult = await this.healing.heal(step.target, { page: { url: currentUrl, title: '', intent: {} as any, sections: [], metadata: {} as any } } as any)
+            const healIR = currentIR || {
+              page: {
+                url: page.url(),
+                title: '',
+                intent: {} as any,
+                sections: [],
+                metadata: {} as any,
+              },
+            }
+            const healResult = await this.healing.heal(step.target, healIR)
             if (healResult.found && healResult.selector) {
               step.target = healResult.selector
               await this.executeStep(step, page)

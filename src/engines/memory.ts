@@ -33,7 +33,6 @@ export class MemoryEngine {
     getByDomain: Database.Statement
     updateVisit: Database.Statement
     updateKnowledge: Database.Statement
-    addIssue: Database.Statement
     prune: Database.Statement
     count: Database.Statement
     domains: Database.Statement
@@ -53,7 +52,6 @@ export class MemoryEngine {
         UPDATE knowledge SET visit_count = visit_count + 1, confidence = ?, last_visit = ? WHERE id = ?
       `),
       updateKnowledge: db.prepare('UPDATE knowledge SET knowledge = ? WHERE id = ?'),
-      addIssue: db.prepare('SELECT knowledge FROM knowledge WHERE id = ?'),
       prune: db.prepare('DELETE FROM knowledge WHERE last_visit < ?'),
       count: db.prepare('SELECT COUNT(*) as count FROM knowledge'),
       domains: db.prepare('SELECT COUNT(DISTINCT domain) as count FROM knowledge'),

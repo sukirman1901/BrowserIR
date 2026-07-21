@@ -90,7 +90,7 @@ async function main() {
 
   const transport = new StdioServerTransport()
   await server.connect(transport)
-  console.error('BrowserIR MCP server running on stdio (29 tools)')
+  console.error('BrowserIR MCP server running on stdio (30 tools)')
 }
 
 main().catch((err) => {

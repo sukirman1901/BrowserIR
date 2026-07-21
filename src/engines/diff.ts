@@ -1,4 +1,3 @@
-import type Database from 'better-sqlite3'
 import type { BrowserIR, ComponentIR } from '../ir/types.js'
 
 export interface DiffResult {
@@ -29,8 +28,6 @@ function getComponents(ir: BrowserIR): ComponentIR[] {
 }
 
 export class DiffEngine {
-  constructor(private db: Database.Database) {}
-
   async diffIRs(irBefore: BrowserIR, irAfter: BrowserIR): Promise<DiffResult> {
     const changes: Change[] = []
     const compsBefore = getComponents(irBefore)

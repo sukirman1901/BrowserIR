@@ -74,42 +74,70 @@ export class BrowserSession {
   async click(ref: string): Promise<void> {
     if (!this.page) throw new Error('Session not started')
 
-    // Extract ref number (e.g., "@e3" -> 3)
     const match = ref.match(/@e(\d+)/)
     if (!match) throw new Error(`Invalid ref format: ${ref}`)
 
-    // Use a11y to find the element
     const targetIndex = parseInt(match[1]) - 1
-    const element = await this.page.evaluate((idx) => {
-      const interactive = document.querySelectorAll(
-        'a, button, input, select, textarea, [role="button"], [role="link"], [role="tab"], [role="menuitem"]'
-      )
-      const el = interactive[idx]
-      if (!el) return null
-      return {
-        tag: el.tagName.toLowerCase(),
-        role: el.getAttribute('role') || el.tagName.toLowerCase(),
-        name: (el as HTMLElement).innerText || el.getAttribute('aria-label') || '',
-        index: idx,
+
+    // Try to find element using a11y snapshot for semantic matching
+    try {
+      if (typeof (this.page as any).accessibility?.snapshot === 'function') {
+        const snapshot = await (this.page as any).accessibility.snapshot({ interestingOnly: false })
+        if (snapshot) {
+          const interactive = this.collectInteractiveA11y(snapshot)
+          if (targetIndex < interactive.length) {
+            const target = interactive[targetIndex]
+            // Try to click by a11y role + name selector
+            const selector = `[role="${target.role}"][aria-label="${target.name}"]`
+            const el = await this.page.$(selector)
+            if (el) {
+              await el.click()
+              return
+            }
+          }
+        }
       }
-    }, targetIndex)
+    } catch {}
 
-    if (!element) throw new Error(`Element ${ref} not found`)
-
-    // Click using evaluate to avoid selector issues
-    await this.page.evaluate((idx) => {
+    // Fallback: use DOM interactive elements
+    const clicked = await this.page.evaluate((idx) => {
       const interactive = document.querySelectorAll(
         'a, button, input, select, textarea, [role="button"], [role="link"], [role="tab"], [role="menuitem"]'
       )
-      const el = interactive[idx]
-      if (el) (el as HTMLElement).click()
+      const el = interactive[idx] as HTMLElement | undefined
+      if (el) {
+        el.click()
+        return true
+      }
+      return false
     }, targetIndex)
+
+    if (!clicked) throw new Error(`Element ${ref} not found`)
+  }
+
+  private collectInteractiveA11y(node: any): Array<{ role: string; name: string }> {
+    const result: Array<{ role: string; name: string }> = []
+    const interactiveRoles = new Set(['button', 'link', 'textbox', 'combobox', 'checkbox', 'radio', 'switch', 'tab', 'menuitem'])
+    
+    if (node.role && interactiveRoles.has(node.role.toLowerCase())) {
+      result.push({ role: node.role, name: node.name || '' })
+    }
+    
+    for (const child of (node.children || [])) {
+      result.push(...this.collectInteractiveA11y(child))
+    }
+    
+    return result
   }
 
   async screenshot(): Promise<string> {
     if (!this.page) throw new Error('Session not started')
     const buffer = await this.page.screenshot({ type: 'png' })
     return buffer.toString('base64')
+  }
+
+  getPage(): Page | null {
+    return this.page
   }
 
   async safeEvaluate<T>(fn: () => T): Promise<T | null> {

@@ -8,15 +8,6 @@ export interface ExplainResult {
   snapshot?: { a11y: any }
 }
 
-export function extractSelectors(...selectors: string[]): string[] {
-  return selectors.filter(s => {
-    if (!s || s.trim() === '') return false
-    // Basic CSS selector validation
-    if (/^[a-zA-Z]/.test(s) || /^[.#\[]/.test(s)) return true
-    return false
-  })
-}
-
 export class ExplainEngine {
   private analyzer = new SemanticAnalyzer()
 

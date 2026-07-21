@@ -11,7 +11,7 @@ import { memoryCommand } from './commands/memory.js'
 const program = new Command()
 
 program
-  .name('browser')
+  .name('bir')
   .description('Browser Intelligence Runtime CLI')
   .version('0.1.0')
 

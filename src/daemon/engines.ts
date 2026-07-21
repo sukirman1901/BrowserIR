@@ -27,7 +27,7 @@ export class EngineManager {
 
   constructor(db: Database.Database) {
     this.memory = new MemoryEngine(db)
-    this.diff = new DiffEngine(db)
+    this.diff = new DiffEngine()
     this.events = new EventEngine(db)
     this.healing = new SelfHealingEngine(this.memory)
     this.flow = new FlowEngine(db)

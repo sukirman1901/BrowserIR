@@ -629,11 +629,13 @@ export class SemanticAnalyzer {
     const content = JSON.stringify({
       url: page.url,
       title: page.title,
-      sections: page.sections.length,
-      components: page.sections.reduce(
-        (sum, s) => sum + s.components.length,
-        0
-      ),
+      sections: page.sections.map(s => ({
+        role: s.role,
+        label: s.label,
+        intent: s.intent,
+        componentCount: s.components.length,
+        componentLabels: s.components.map(c => c.label).join(','),
+      })),
     })
     // Simple hash for now
     let hash = 0

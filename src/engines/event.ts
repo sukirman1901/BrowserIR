@@ -64,7 +64,7 @@ export class EventEngine {
     if (options?.type) { sql += ' AND type = ?'; params.push(options.type) }
     if (options?.since) { sql += ' AND timestamp > ?'; params.push(options.since) }
     sql += ' ORDER BY timestamp ASC'
-    if (options?.limit) { sql += ` LIMIT ${options.limit}` }
+    if (options?.limit) { sql += ' LIMIT ?'; params.push(options.limit) }
     const rows = this.db.prepare(sql).all(...params) as any[]
     return rows.map(r => ({
       id: r.id,
@@ -79,7 +79,7 @@ export class EventEngine {
 
   async getPatterns(domain: string): Promise<EventPattern[]> {
     const events = this.db.prepare(
-      'SELECT * FROM events WHERE session_id LIKE ? ORDER BY timestamp ASC'
+      "SELECT * FROM events WHERE data LIKE ? ORDER BY timestamp ASC"
     ).all(`%${domain}%`) as any[]
 
     const patterns: EventPattern[] = []
