@@ -2,7 +2,7 @@
   "name": "bir",
   "description": "BrowserIR — Semantic browser understanding engine for AI agents",
   "version": "0.1.0",
-  "location": "skills/bir/SKILL.md",
+  "location": "skills/SKILL.md",
   "keywords": ["browser", "semantic", "ir", "web", "automation", "testing", "ai"],
   "mcp": {
     "server": "bir",
