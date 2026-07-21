@@ -1,6 +1,6 @@
 # BrowserIR (Browser Intelligence Runtime)
 
-> Semantic browser understanding engine for AI agents. Compiles web pages into typed, structured intermediate representations (IR) that AI can reason about.
+> Semantic browser understanding engine for AI agents. Built with **TypeScript**. Compiles web pages into typed, structured intermediate representations (IR) that AI can reason about.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

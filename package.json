@@ -1,7 +1,7 @@
 {
   "name": "@browserir/core",
   "version": "0.1.0",
-  "description": "Browser Intelligence Runtime — Semantic web understanding for AI agents",
+  "description": "Browser Intelligence Runtime — Semantic web understanding for AI agents, built with TypeScript",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
