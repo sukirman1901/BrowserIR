@@ -28,12 +28,8 @@
     <span class="status-pill" class:connected={$wsConnected}>
       {$wsConnected ? 'Connected' : 'Offline'}
     </span>
-    <button class="hamburger-btn" onclick={toggleMobile} aria-label="Toggle navigation menu">
-      {#if mobileOpen}
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-      {:else}
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-      {/if}
+    <button class="hamburger-btn" onclick={toggleMobile} aria-label="Open navigation menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
     </button>
   </div>
 </header>
@@ -46,7 +42,12 @@
 <div class="app">
   <nav class="sidebar" class:open={mobileOpen}>
     <div class="logo">
-      <h1>BrowserIR</h1>
+      <div class="logo-header-row">
+        <h1>BrowserIR</h1>
+        <button class="close-drawer-btn" onclick={closeMobile} aria-label="Close sidebar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
     </div>
 
     <div class="nav-links">
@@ -127,11 +128,12 @@
     border: none;
     color: var(--text);
     cursor: pointer;
-    padding: 0.25rem;
+    padding: 0.4rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
+    border-radius: 8px;
+    transition: background 0.15s ease;
   }
 
   .hamburger-btn:hover {
@@ -140,8 +142,8 @@
 
   .status-pill {
     font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.2rem 0.6rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
     border-radius: 9999px;
     background: var(--accent-red-bg);
     color: var(--accent-red);
@@ -154,13 +156,13 @@
 
   /* Backdrop Overlay */
   .backdrop {
-    display: none;
     position: fixed;
     inset: 0;
     background: rgba(15, 23, 42, 0.4);
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(3px);
     z-index: 45;
     border: none;
+    cursor: pointer;
   }
 
   /* Sidebar styling */
@@ -186,6 +188,12 @@
     margin-bottom: 1rem;
   }
 
+  .logo-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
   .logo h1 {
     font-size: 1.35rem;
     font-weight: 800;
@@ -198,6 +206,21 @@
     font-weight: 800;
     color: var(--accent);
     letter-spacing: -0.025em;
+  }
+
+  .close-drawer-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+  }
+
+  .close-drawer-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
   }
 
   .nav-links {
@@ -287,13 +310,20 @@
       display: flex;
     }
 
-    .backdrop {
-      display: block;
+    .close-drawer-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .sidebar {
+      width: 280px;
+      max-width: 85vw;
+      top: 0;
+      bottom: 0;
+      height: 100vh;
       transform: translateX(-100%);
-      top: 60px;
+      box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
     }
 
     .sidebar.open {
