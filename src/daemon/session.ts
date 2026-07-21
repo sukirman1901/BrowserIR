@@ -272,4 +272,27 @@ export class BrowserSession {
       active: p === this.page,
     }))
   }
+
+  async scroll(x: number = 0, y: number = 200): Promise<void> {
+    if (!this.page) throw new Error('Session not started')
+    await this.page.evaluate(([sx, sy]) => window.scrollTo(sx, sy), [x, y])
+    await this.page.waitForTimeout(300)
+  }
+
+  async executeScript(code: string): Promise<any> {
+    if (!this.page) throw new Error('Session not started')
+    return this.page.evaluate(code)
+  }
+
+  async injectScript(script: string): Promise<void> {
+    if (!this.context) throw new Error('Session not started')
+    await this.context.addInitScript(script)
+  }
+
+  async openTab(url: string): Promise<void> {
+    if (!this.context) throw new Error('Session not started')
+    const page = await this.context.newPage()
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 })
+    this.page = page
+  }
 }
