@@ -249,35 +249,119 @@ export class TestRunner {
   generateHTMLReport(results: TestResult[]): string {
     const passed = results.filter(r => r.passed).length
     const failed = results.filter(r => !r.passed).length
-
+    const totalDuration = results.reduce((sum, r) => sum + r.duration, 0)
+    
     return `
 <!DOCTYPE html>
 <html>
 <head>
   <title>E2E Test Report</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .summary { padding: 10px; margin: 10px 0; border-radius: 5px; }
-    .passed { background: #d4edda; color: #155724; }
-    .failed { background: #f8d7da; color: #721c24; }
-    .test { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
-    .test.passed { border-left: 5px solid #28a745; }
-    .test.failed { border-left: 5px solid #dc3545; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui; background: #0a0a0a; color: #fff; padding: 20px; }
+    .header { background: #1a1a2e; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .header h1 { font-size: 24px; color: #00d4ff; }
+    .summary { display: flex; gap: 20px; margin: 20px 0; }
+    .summary-item { background: #1a1a2e; padding: 16px; border-radius: 8px; flex: 1; }
+    .summary-item h3 { font-size: 14px; color: #888; margin-bottom: 8px; }
+    .summary-item .value { font-size: 24px; font-weight: bold; }
+    .passed { color: #44ff44; }
+    .failed { color: #ff4444; }
+    .duration { color: #ffaa00; }
+    .test { background: #1a1a2e; border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .test-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .test-header.passed { border-left: 4px solid #44ff44; }
+    .test-header.failed { border-left: 4px solid #ff4444; }
+    .test-name { font-weight: bold; }
+    .test-duration { color: #888; font-size: 14px; }
+    .test-body { padding: 16px; border-top: 1px solid #333; }
+    .assertion { padding: 8px; margin: 4px 0; border-radius: 4px; font-size: 14px; }
+    .assertion.passed { background: #44ff4420; }
+    .assertion.failed { background: #ff444420; }
+    .assertion-type { color: #00d4ff; font-weight: bold; }
+    .assertion-expected { color: #888; }
+    .assertion-actual { color: #fff; }
+    .recommendations { background: #1a1a2e; padding: 16px; border-radius: 8px; margin-top: 20px; }
+    .recommendations h3 { color: #ffaa00; margin-bottom: 12px; }
+    .recommendation { padding: 8px; border-left: 3px solid #ffaa00; margin: 8px 0; }
   </style>
 </head>
 <body>
-  <h1>E2E Test Report</h1>
-  <div class="summary ${failed === 0 ? 'passed' : 'failed'}">
-    Total: ${results.length} | Passed: ${passed} | Failed: ${failed}
+  <div class="header">
+    <h1>📊 E2E Test Report</h1>
+    <p style="color: #888; margin-top: 8px;">Generated: ${new Date().toISOString()}</p>
   </div>
+  
+  <div class="summary">
+    <div class="summary-item">
+      <h3>Total Tests</h3>
+      <div class="value">${results.length}</div>
+    </div>
+    <div class="summary-item">
+      <h3>Passed</h3>
+      <div class="value passed">${passed}</div>
+    </div>
+    <div class="summary-item">
+      <h3>Failed</h3>
+      <div class="value failed">${failed}</div>
+    </div>
+    <div class="summary-item">
+      <h3>Duration</h3>
+      <div class="value duration">${totalDuration}ms</div>
+    </div>
+  </div>
+  
   ${results.map(r => `
-    <div class="test ${r.passed ? 'passed' : 'failed'}">
-      <h3>${r.passed ? '✓' : '✗'} ${r.name} (${r.duration}ms)</h3>
+    <div class="test">
+      <div class="test-header ${r.passed ? 'passed' : 'failed'}">
+        <span class="test-name">${r.passed ? '✓' : '✗'} ${r.name}</span>
+        <span class="test-duration">${r.duration}ms</span>
+      </div>
+      <div class="test-body">
+        ${r.assertions.map(a => `
+          <div class="assertion ${a.passed ? 'passed' : 'failed'}">
+            <span class="assertion-type">${a.assertion.type}</span>
+            <span class="assertion-expected">Expected: ${a.assertion.expected}</span>
+            ${a.actual ? `<span class="assertion-actual">Actual: ${a.actual}</span>` : ''}
+          </div>
+        `).join('')}
+      </div>
     </div>
   `).join('')}
+  
+  <div class="recommendations">
+    <h3>💡 Recommendations</h3>
+    ${failed > 0 ? '<div class="recommendation">Some tests failed. Review the assertions above for details.</div>' : '<div class="recommendation">All tests passed! Good job.</div>'}
+  </div>
 </body>
 </html>
   `.trim()
+  }
+
+  generateJSONReport(results: TestResult[]): object {
+    const passed = results.filter(r => r.passed).length
+    const failed = results.filter(r => !r.passed).length
+    
+    return {
+      summary: {
+        total: results.length,
+        passed,
+        failed,
+        passRate: `${((passed / results.length) * 100).toFixed(2)}%`
+      },
+      results: results.map(r => ({
+        name: r.name,
+        passed: r.passed,
+        duration: r.duration,
+        assertions: r.assertions.map(a => ({
+          type: a.assertion.type,
+          passed: a.passed,
+          expected: a.assertion.expected,
+          actual: a.actual
+        }))
+      })),
+      timestamp: new Date().toISOString()
+    }
   }
 
   generateReport(results: TestResult[]): string {
