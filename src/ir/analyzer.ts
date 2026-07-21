@@ -518,7 +518,32 @@ export class SemanticAnalyzer {
           type: 'missing_field',
           severity: 'medium',
           description: 'Form section has no input fields',
+          mitigation: 'Add input fields to the form',
         })
+      }
+    }
+
+    // Check for sensitive data patterns
+    const allComponents = sections.flatMap((s) => s.components)
+    const sensitivePatterns = [
+      { pattern: /password|pass|pwd/i, type: 'credential', severity: 'high' as const },
+      { pattern: /credit.?card|card.?number|cvv|ccv/i, type: 'financial', severity: 'critical' as const },
+      { pattern: /ssn|social.?security|tax.?id/i, type: 'pii', severity: 'critical' as const },
+      { pattern: /delete|remove|destroy|cancel/i, type: 'destructive', severity: 'high' as const },
+      { pattern: /admin|root|sudo|superuser/i, type: 'privilege', severity: 'high' as const },
+    ]
+
+    for (const comp of allComponents) {
+      for (const { pattern, type, severity } of sensitivePatterns) {
+        if (pattern.test(comp.label) || pattern.test(comp.intent)) {
+          risks.push({
+            type,
+            severity,
+            description: `Sensitive action detected: ${comp.label}`,
+            affectedComponents: [comp.id],
+            mitigation: `Review ${type} handling before proceeding`,
+          })
+        }
       }
     }
 

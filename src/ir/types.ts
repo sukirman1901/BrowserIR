@@ -153,9 +153,17 @@ export interface FlowStep {
 
 export interface RiskAssessment {
   type: string
-  severity: 'low' | 'medium' | 'high'
+  severity: 'low' | 'medium' | 'high' | 'critical'
   description: string
-  componentRef?: string
+  mitigation?: string
+  affectedComponents?: string[]
+  compliance?: ComplianceCheck[]
+}
+
+export interface ComplianceCheck {
+  standard: 'GDPR' | 'PCI' | 'HIPAA' | 'SOC2' | 'CCPA'
+  status: 'compliant' | 'non_compliant' | 'needs_review'
+  details: string
 }
 
 // ===== Evidence =====
