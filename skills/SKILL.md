@@ -29,243 +29,171 @@ BrowserIR compiles web pages into **semantic intermediate representations (IR)**
 8. **Multi-Browser** — Coordinates multiple tabs/sessions
 9. **Agent Coordination** — Multiple AI agents can work together
 
-## MCP Tools (29 tools)
+---
+
+## Interfaces (MCP Tools vs CLI Commands)
+
+BrowserIR provides two distinct interfaces depending on how you interact:
+- **MCP Tools** (for AI Assistants / LLMs): Functions prefixed with `bir_` (e.g. `bir_explain`, `bir_click`).
+- **CLI Commands** (for Terminal / Shell): Command-line subcommands (e.g. `bir explain <url>`, `bir click @e3`).
+
+---
+
+## MCP Tools (29 tools for AI Agents)
 
 ### Core Navigation & Analysis
-| Tool | Description |
-|------|-------------|
-| `bir_navigate` | Navigate to URL and return status |
-| `bir_explain` | Analyze page and return semantic BrowserIR |
-| `bir_click` | Click element by ref (@e1, @e2, ...) |
-| `bir_screenshot` | Take screenshot of current page |
-| `bir_graph` | Get page structure as tree graph |
-| `bir_tabs` | List all browser tabs |
-| `bir_status` | Check daemon status |
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_navigate` | Navigate to URL in browser | `{ url: string }` |
+| `bir_explain` | Analyze page and return semantic BrowserIR | `{ url: string }` |
+| `bir_click` | Click element by ref (`@e1`, `@e2`, ...) | `{ ref: string }` |
+| `bir_screenshot` | Take screenshot of current page | `{}` |
+| `bir_graph` | Get page structure as tree graph | `{ url: string }` |
+| `bir_tabs` | List all open browser tabs | `{}` |
+| `bir_status` | Check daemon status | `{}` |
 
 ### Semantic Analysis
-| Tool | Description |
-|------|-------------|
-| `bir_flow_detect` | Detect multi-step flows from captured events |
-| `bir_flow_list` | List known flows for a domain |
-| `bir_diff_compare` | Compare two BrowserIR snapshots semantically |
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_flow_detect` | Detect multi-step flows from captured events | `{ sessionId: string }` |
+| `bir_flow_list` | List known flows for a domain | `{ domain: string }` |
+| `bir_diff_compare` | Compare two BrowserIR snapshots semantically | `{ irBefore: object, irAfter: object }` |
 
 ### Memory System
-| Tool | Description |
-|------|-------------|
-| `bir_memory_recall` | Recall learned knowledge about a domain |
-| `bir_memory_store` | Store BrowserIR knowledge about a domain |
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_memory_recall` | Recall learned knowledge about a domain | `{ domain: string }` |
+| `bir_memory_store` | Store BrowserIR knowledge about a domain | `{ domain: string, ir: object }` |
 
 ### Knowledge Graph
-| Tool | Description |
-|------|-------------|
-| `bir_knowledge_add_node` | Add node to knowledge graph |
-| `bir_knowledge_add_edge` | Add edge between knowledge nodes |
-| `bir_knowledge_search` | Search knowledge graph by label or type |
-| `bir_knowledge_traverse` | Traverse graph from starting node |
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_knowledge_add_node` | Add node to knowledge graph | `{ type: string, label: string, properties?: object }` |
+| `bir_knowledge_add_edge` | Add edge between knowledge nodes | `{ source: string, target: string, type: string, weight?: number }` |
+| `bir_knowledge_search` | Search knowledge graph by label or type | `{ query: string, type?: string }` |
+| `bir_knowledge_traverse` | Traverse graph from starting node | `{ startId: string, maxDepth?: number }` |
 
 ### Event System
-| Tool | Description |
-|------|-------------|
-| `bir_events_capture` | Capture custom event into event stream |
-| `bir_events_get` | Query captured events for a session |
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_events_capture` | Capture custom event into event stream | `{ type: string, sessionId: string, data?: object }` |
+| `bir_events_get` | Query captured events for a session | `{ sessionId: string, query?: object }` |
 
 ### Planner Engine
-| Tool | Description |
-|------|-------------|
-| `bir_planner_create` | Create execution plan for a goal |
-| `bir_planner_execute` | Execute a plan by ID |
-| `bir_planner_status` | Get status of a plan |
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_planner_create` | Create execution plan for a goal | `{ goal: string, domain: string }` |
+| `bir_planner_execute` | Execute a plan by ID | `{ planId: string }` |
+| `bir_planner_status` | Get status of a plan | `{ planId: string }` |
 
 ### Self-Healing
-| Tool | Description |
-|------|-------------|
-| `bir_heal_find` | Find replacement for broken selector using semantic IR |
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_heal_find` | Find replacement for broken selector using semantic IR | `{ brokenSelector: string, ir: object, intent?: string }` |
 
 ### Multi-Browser
-| Tool | Description |
-|------|-------------|
-| `bir_multi_create_session` | Create new multi-browser session |
-| `bir_multi_execute` | Execute task across multiple tabs |
-| `bir_multi_sessions` | List all multi-browser sessions |
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_multi_create_session` | Create new multi-browser session | `{}` |
+| `bir_multi_execute` | Execute task across multiple tabs | `{ task: object }` |
+| `bir_multi_sessions` | List all multi-browser sessions | `{}` |
 
 ### Agent Coordination
-| Tool | Description |
-|------|-------------|
-| `bir_agent_register` | Register agent for coordination |
-| `bir_agent_unregister` | Unregister agent |
-| `bir_agent_claim` | Claim work on specific action |
-| `bir_agent_graph` | Show agent dependency graph |
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_agent_register` | Register agent for coordination | `{ id: string, name: string, role: string, sessionId: string }` |
+| `bir_agent_unregister` | Unregister agent | `{ id: string }` |
+| `bir_agent_claim` | Claim work on specific action | `{ agentId: string, type: string, target?: string }` |
+| `bir_agent_graph` | Show agent dependency graph | `{}` |
 
-## CLI Commands
+---
+
+## CLI Commands (Terminal Usage)
 
 ```bash
-bir explain [url]              # Get semantic IR
-bir click @e3                  # Click element by ref
-bir screenshot                 # Take screenshot
+bir daemon start               # Start BrowserIR daemon
+bir explain [url]              # Get semantic IR in terminal
+bir click @e3                  # Click element by semantic ref
+bir screenshot                 # Take screenshot of current page
 bir graph <url>                # Show page structure as tree
-bir diff <before.json> <after.json>   # Compare IRs
-bir memory recall <domain>     # Recall knowledge
-bir memory store <json>        # Store knowledge
-bir flow detect [url]          # Detect flows
+bir diff <before.json> <after.json>   # Compare 2 IR JSON files
+bir memory recall <domain>     # Recall domain knowledge
+bir memory store <json>        # Store domain knowledge
 bir status                     # Check daemon status
 ```
 
-## Workflow
+---
 
-### Step 1: Start daemon (if not running)
+## Workflows & Examples
+
+### Step 1: Start Daemon
 ```bash
 bir daemon start
+# or: node dist/daemon/server.js
 ```
 
-### Step 2: Analyze page
-```bash
-bir explain https://example.com
+### Step 2: Analyze Page (MCP or CLI)
+- **CLI**:
+  ```bash
+  bir explain https://example.com
+  ```
+- **MCP Tool**:
+  ```json
+  bir_explain({ "url": "https://example.com" })
+  ```
+
+This returns BrowserIR containing:
+- `sections` — Semantic page structure (`navigation`, `form`, `content`, `footer`)
+- `intent` — Page purpose classification (`authentication`, `purchase`, `search`, etc.)
+- `components` — Interactive components with refs (`@e1`, `@e2`, `@e3`)
+- `risk` — Risk assessments (warnings on destructive or credential actions)
+
+### Step 3: Interact Using Refs
+- **CLI**:
+  ```bash
+  bir click @e5
+  ```
+- **MCP Tool**:
+  ```json
+  bir_click({ "ref": "@e5" })
+  ```
+
+### Step 4: Self-Healing Broken Selectors (MCP Tool)
+```json
+bir_heal_find({
+  "brokenSelector": "button.submit",
+  "intent": "submit form",
+  "ir": currentBrowserIRObject
+})
 ```
 
-This returns BrowserIR with:
-- `sections` — Semantic page structure
-- `intent` — What the page is for
-- `components` — Interactive elements with refs
-- `risk` — Risk assessment
-- `flow` — Multi-step flow if detected
-
-### Step 3: Interact using refs
-```bash
-bir click @e5  # Click element with ref @e5
-bir explain     # Re-analyze after interaction
+### Step 5: Multi-Browser Testing (MCP Tools)
+```json
+bir_multi_create_session()
+bir_multi_execute({ "task": { "tabs": [{ "url": "https://example.com" }] } })
+bir_multi_sessions()
 ```
 
-### Step 4: Use memory
-```bash
-# Store what you learned
-bir memory store '{"domain":"shop.com","commonFlows":["browse","cart","checkout"]}'
-
-# Recall later
-bir memory recall shop.com
+### Step 6: Agent Coordination (MCP Tools)
+```json
+bir_agent_register({ "id": "agent-1", "name": "tester", "role": "primary", "sessionId": "session-123" })
+bir_agent_claim({ "agentId": "agent-1", "type": "click", "target": "@e5" })
+bir_agent_graph()
 ```
 
-### Step 5: Compare versions
-```bash
-bir diff compare before.json after.json
-```
+---
 
-### Step 6: Self-healing (if selector breaks)
-```bash
-bir heal.find --selector "button.submit" --intent "submit form" --ir <current-ir>
-# Returns: new working selector with semantic match
-```
+## Tips & Best Practices
 
-### Step 7: Multi-browser testing
-```bash
-bir multi.createSession
-bir multi.execute --task '{"tabs":[{"url":"..."},...]}'
-bir multi.sessions
-```
+1. **Always start with `bir_explain` / `bir explain`** — Dapatkan IR sebelum bertindak.
+2. **Gunakan Ref (`@e5`), Bukan CSS Selector** — Ref bersifat deterministik dan tahan perubahan UI.
+3. **Cek Intent & Risk** — Pahami risiko sebelum mengeksekusi tombol sensitif (seperti hapus data / checkout).
+4. **Gunakan Memory & Flow** — Manfaatkan sistem memori untuk mengenali pola alur web yang sering dikunjungi.
 
-### Step 8: Agent coordination
-```bash
-bir agent.register --id "agent-1" --name "tester" --role "primary" --sessionId "..."
-bir agent.claim --agentId "agent-1" --type "click" --target "@e5"
-bir agent.graph  # See who's working on what
-```
-
-## Tips
-
-1. **Always start with `bir explain`** — get the IR before any action
-2. **Use refs, not CSS** — `@e5` is deterministic, CSS selectors break
-3. **Check intent** — understand what the page is for
-4. **Check risks** — BrowserIR warns about destructive actions
-5. **Use memory** — store and recall patterns
-6. **Use flow** — detect multi-step processes
-7. **Use diff** — compare page versions
-8. **Use heal** — fix broken selectors automatically
-9. **Use multi** — test across multiple tabs
-10. **Use agent** — coordinate multiple AI agents
-
-## Integration with Other Skills
-
-### browser-smoke (Visual Testing)
-```bash
-# browser-smoke for screenshots
-browser_screenshot
-
-# BrowserIR for semantic understanding
-bir explain
-
-# Combine for comprehensive testing
-```
-
-### cybersec (Security Testing)
-```bash
-# BrowserIR for intent analysis
-bir explain https://target.com/login
-
-# Check if page has security concerns
-# (intent.category = 'authentication', risk includes 'credentials')
-```
-
-## Common Patterns
-
-### Login Flow Analysis
-```bash
-bir explain https://example.com/login
-# Check: intent.category = 'authentication'
-# Check: risk includes 'credentials'
-# Components: email field, password field, submit button
-```
-
-### Checkout Flow Detection
-```bash
-bir flow detect https://example.com/checkout
-# Returns: multi-step flow with steps, required, estimatedDuration
-```
-
-### Page Comparison
-```bash
-bir explain http://localhost:3000 > v1.json
-# ... make changes ...
-bir explain http://localhost:3000 > v2.json
-bir diff compare v1.json v2.json
-# Returns: semantic, structural, state, intent diffs
-```
-
-### Multi-Agent Coordination
-```bash
-bir agent.register --id "tester" --name "tester" --role "primary" --sessionId "..."
-bir agent.claim --agentId "tester" --type "test_login"
-bir agent.graph  # See who's working on what
-```
-
-### Self-Healing Broken Selectors
-```bash
-# Original selector broke after UI update
-bir explain http://localhost:3000/login  # Get fresh IR
-bir heal.find --selector "button.submit" --intent "submit form" --ir <ir>
-# Returns: new semantic selector that matches intent
-```
+---
 
 ## Troubleshooting
 
-### Daemon not running
-```bash
-bir status  # Check if daemon is running
-bir daemon start  # Start if not
-```
-
-### No elements found
-```bash
-bir explain  # Check if page loaded
-bir screenshot  # Visual check
-```
-
-### Ref not found
-```bash
-bir explain  # Refresh refs after navigation
-bir click @e5  # Use fresh ref
-```
-
-### Selector broken
-```bash
-bir heal.find --selector "old-selector" --intent "what it does" --ir <current-ir>
-# Get new working selector
-```
+- **Daemon belum berjalan**: Jalankan `node dist/daemon/server.js` atau `bir daemon start`.
+- **Ref tidak ditemukan**: Jalankan `bir_explain` ulang untuk memperbarui daftar ref komponen yang baru dirender.
+- **Selector lama rusak**: Gunakan `bir_heal_find` untuk mendapatkan selector pengganti yang sesuai intent.
