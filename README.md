@@ -131,14 +131,20 @@ When the daemon is running:
 
 - 🧠 **Semantic Analysis**: Classifies page intent (`authentication`, `purchase`, `search`, etc.).
 - 🏷️ **Deterministic Refs (`@e1`, `@e2`)**: Click elements without fragile CSS selectors.
-- 🩹 **Self-Healing Selectors**: Automatically repairs broken selectors with 3 strategies (text, role, position).
+- 🩹 **Self-Healing Selectors**: Automatically repairs broken selectors with 3 strategies (text, role, position) + history learning.
 - 💾 **Domain Memory**: Learns domain patterns and stores them in persistent SQLite.
 - 👥 **Multi-Agent & Multi-Tab**: Coordinate multiple AI agents on the same page.
 - ⚠ **Risk Assessment**: Warns before performing irreversible or sensitive actions.
 - 🔄 **Flow Detection**: Detects login, checkout, search, registration flows from page structure.
-- 🧪 **E2E Testing**: Run JSON-based test cases with `bir test`.
-- 🖼 **Visual Debugging**: Screenshot capture and visual diff comparison.
+- 🧪 **E2E Testing**: Run JSON-based test cases with retries, parallel execution, HTML reports.
+- 🖼 **Visual Debugging**: Screenshot capture and pixelmatch visual diff comparison.
 - 🎯 **General Planner**: Pattern matching for navigation, auth, search, purchase tasks.
+- 🔌 **Network Capture**: Intercept and log HTTP requests/responses for debugging.
+- 📟 **Console & Error Capture**: Auto-capture browser console logs and JS runtime errors.
+- 💉 **Script Injection**: Inject JavaScript before page load for mocking/testing.
+- 🍪 **Cookie/Storage Management**: Setup and verify app state (cookies, localStorage).
+- 🔦 **Element Highlight**: Visual debugging with colored outlines.
+- 🔄 **Failure Analysis Loop**: Test → fail → debug (network/console/errors) → fix → retest.
 
 ---
 

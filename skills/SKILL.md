@@ -12,6 +12,11 @@ Use this skill when the user wants to:
 - **Coordinate** multiple agents working on the same page
 - **Heal** broken selectors automatically
 - **Run** multi-browser sessions
+- **Capture** network requests/responses for debugging
+- **Monitor** console logs and JS runtime errors
+- **Inject** scripts before page load for testing
+- **Manage** cookies and storage state
+- **Highlight** elements for visual debugging
 
 ## What This Skill Does
 
@@ -22,12 +27,18 @@ BrowserIR compiles web pages into **semantic intermediate representations (IR)**
 1. **Semantic Analysis** — Understands page purpose, not just DOM
 2. **Intent Recognition** — Classifies page type (auth, purchase, search, etc.)
 3. **Risk Assessment** — Warns about destructive actions
-4. **Flow Detection** — Identifies multi-step processes
-5. **Memory System** — Learns from past interactions
+4. **Flow Detection** — Identifies multi-step processes (dynamic graph-based)
+5. **Memory System** — Learns from past interactions (persistent SQLite)
 6. **Evidence Chains** — Explains WHY it thinks something is what it is
-7. **Self-Healing** — Automatically fixes broken selectors
-8. **Multi-Browser** — Coordinates multiple tabs/sessions
-9. **Agent Coordination** — Multiple AI agents can work together
+7. **Self-Healing** — Automatically fixes broken selectors (with history learning)
+8. **Multi-Browser** — Coordinates multiple tabs/sessions (Playwright-based)
+9. **Agent Coordination** — Multiple AI agents can work together (persistent)
+10. **Network Capture** — Intercept and log HTTP requests/responses
+11. **Console & Error Capture** — Auto-capture browser console logs and JS errors
+12. **Script Injection** — Inject JavaScript before page load for mocking
+13. **Cookie/Storage Management** — Setup and verify app state
+14. **Element Highlight** — Visual debugging with colored outlines
+15. **Failure Analysis Loop** — Test → fail → debug → fix → retest
 
 ---
 

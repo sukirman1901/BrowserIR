@@ -228,6 +228,8 @@ BrowserIR explains WHY it thinks something is what it is:
 - Smoke testing
 - Visual regression
 - Network debugging
+- Failure analysis
+- Console error tracking
 
 ### Codex / Pi.dev
 - Quick page queries
