@@ -24,19 +24,27 @@ export class BrowserSession {
   }
 
   async start(): Promise<void> {
+    const launchArgs = ['--disable-blink-features=AutomationControlled']
     try {
       this.browser = await chromium.launch({
         headless: this.options.headless,
+        args: launchArgs,
         ...(this.options.channel ? { channel: this.options.channel } : {}),
       })
     } catch {
       this.browser = await chromium.launch({
         headless: this.options.headless,
+        args: launchArgs,
       })
     }
 
     this.context = await this.browser.newContext({
       viewport: this.options.viewport,
+      userAgent:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      extraHTTPHeaders: {
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
     })
 
     this.page = await this.context.newPage()
