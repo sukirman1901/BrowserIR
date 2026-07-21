@@ -93,6 +93,94 @@ export class TestRunner {
     }
   }
 
+  async runTestWithRetry(
+    page: Page,
+    testCase: TestCase,
+    ir: BrowserIR,
+    options: { retries?: number; timeout?: number } = {}
+  ): Promise<TestResult> {
+    const { retries = 2, timeout = 30000 } = options
+    let lastResult: TestResult | null = null
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const result = await Promise.race([
+          this.runTest(page, testCase, ir),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Test timeout')), timeout)
+          )
+        ])
+
+        if (result.passed) return result
+        lastResult = result
+      } catch (error) {
+        lastResult = {
+          name: testCase.name,
+          passed: false,
+          steps: [],
+          assertions: [],
+          duration: timeout,
+        }
+      }
+    }
+
+    return lastResult!
+  }
+
+  async runTestsParallel(
+    page: Page,
+    testCases: TestCase[],
+    ir: BrowserIR,
+    options: { concurrency?: number } = {}
+  ): Promise<TestResult[]> {
+    const { concurrency = 3 } = options
+    const results: TestResult[] = []
+
+    for (let i = 0; i < testCases.length; i += concurrency) {
+      const batch = testCases.slice(i, i + concurrency)
+      const batchResults = await Promise.all(
+        batch.map(tc => this.runTest(page, tc, ir))
+      )
+      results.push(...batchResults)
+    }
+
+    return results
+  }
+
+  generateHTMLReport(results: TestResult[]): string {
+    const passed = results.filter(r => r.passed).length
+    const failed = results.filter(r => !r.passed).length
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>E2E Test Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .summary { padding: 10px; margin: 10px 0; border-radius: 5px; }
+    .passed { background: #d4edda; color: #155724; }
+    .failed { background: #f8d7da; color: #721c24; }
+    .test { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+    .test.passed { border-left: 5px solid #28a745; }
+    .test.failed { border-left: 5px solid #dc3545; }
+  </style>
+</head>
+<body>
+  <h1>E2E Test Report</h1>
+  <div class="summary ${failed === 0 ? 'passed' : 'failed'}">
+    Total: ${results.length} | Passed: ${passed} | Failed: ${failed}
+  </div>
+  ${results.map(r => `
+    <div class="test ${r.passed ? 'passed' : 'failed'}">
+      <h3>${r.passed ? '✓' : '✗'} ${r.name} (${r.duration}ms)</h3>
+    </div>
+  `).join('')}
+</body>
+</html>
+  `.trim()
+  }
+
   generateReport(results: TestResult[]): string {
     const lines: string[] = []
     lines.push('=== E2E Test Report ===')
