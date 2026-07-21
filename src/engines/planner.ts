@@ -159,32 +159,62 @@ export class PlannerEngine {
   }
 
   private generateSteps(goal: string, domain: string): PlanStep[] {
-    const steps: PlanStep[] = []
     const goalLower = goal.toLowerCase()
+    const steps: PlanStep[] = []
 
-    if (goalLower.includes('login') || goalLower.includes('sign in')) {
-      steps.push(this.makeStep('navigate', `https://${domain}/login`))
-      steps.push(this.makeStep('type', 'input[type="email"]', 'user@example.com'))
-      steps.push(this.makeStep('type', 'input[type="password"]', 'password'))
-      steps.push(this.makeStep('click', 'button[type="submit"]'))
-    } else if (goalLower.includes('search')) {
-      steps.push(this.makeStep('navigate', `https://${domain}`))
-      steps.push(this.makeStep('type', 'input[type="search"]', goal))
-      steps.push(this.makeStep('click', 'button[type="submit"]'))
-    } else {
-      steps.push(this.makeStep('navigate', `https://${domain}`))
+    // Navigation
+    if (goalLower.includes('go to') || goalLower.includes('navigate') || goalLower.includes('open')) {
+      const url = goal.match(/https?:\/\/[^\s]+/)?.[0] || `https://${domain}`
+      steps.push(this.makeStep('navigate', url))
+      return steps
     }
 
+    // Authentication
+    if (goalLower.includes('login') || goalLower.includes('sign in') || goalLower.includes('masuk')) {
+      steps.push(this.makeStep('navigate', `https://${domain}`))
+      steps.push(this.makeStep('wait', undefined, '2000'))
+      steps.push(this.makeStep('click', 'button:Masuk'))
+      steps.push(this.makeStep('type', 'input[type="email"]', goalLower.includes('@') ? goal : ''))
+      steps.push(this.makeStep('type', 'input[type="password"]', ''))
+      steps.push(this.makeStep('click', 'button[type="submit"]'))
+      return steps
+    }
+
+    // Search
+    if (goalLower.includes('search') || goalLower.includes('find') || goalLower.includes('cari')) {
+      const query = goal.replace(/search|find|cari/gi, '').trim()
+      steps.push(this.makeStep('navigate', `https://${domain}`))
+      steps.push(this.makeStep('wait', undefined, '2000'))
+      steps.push(this.makeStep('type', 'input[type="search"], input[name="q"]', query))
+      steps.push(this.makeStep('click', 'button[type="submit"]'))
+      return steps
+    }
+
+    // Purchase
+    if (goalLower.includes('buy') || goalLower.includes('purchase') || goalLower.includes('beli')) {
+      const product = goal.replace(/buy|purchase|beli/gi, '').trim()
+      steps.push(this.makeStep('navigate', `https://${domain}`))
+      steps.push(this.makeStep('wait', undefined, '2000'))
+      steps.push(this.makeStep('type', 'input[type="search"]', product))
+      steps.push(this.makeStep('click', 'button[type="submit"]'))
+      steps.push(this.makeStep('wait', undefined, '2000'))
+      steps.push(this.makeStep('click', 'a:product-item'))
+      steps.push(this.makeStep('click', 'button:Beli'))
+      return steps
+    }
+
+    // Default: navigate
+    steps.push(this.makeStep('navigate', `https://${domain}`))
     return steps
   }
 
-  private makeStep(action: PlanStep['action'], target: string, value?: string): PlanStep {
+  private makeStep(action: PlanStep['action'], target?: string, value?: string): PlanStep {
     return {
       id: randomUUID(),
       action,
       target,
       value,
-      expectation: { type: 'element_visible', value: target, timeout: 5000 },
+      expectation: { type: 'element_visible', value: target || '', timeout: 5000 },
       status: 'pending',
       attempts: 0,
       maxAttempts: 3
