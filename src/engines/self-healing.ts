@@ -146,6 +146,30 @@ export class SelfHealingEngine {
       // Memory lookup error
     }
 
+    // Strategy 5: Visual Match
+    const visualMatch = await this.visualMatch(cleanSelector, components)
+    if (visualMatch) {
+      attempts.push({ method: 'visual', confidence: 0.85, description: 'Visual element match' })
+      await this.recordAttempt(domain, brokenSelector, visualMatch, 'visual', true)
+      return { found: true, selector: visualMatch, confidence: 0.85, method: 'visual', attempts }
+    }
+
+    // Strategy 6: Context Match
+    const contextMatch = this.contextMatch(cleanSelector, components)
+    if (contextMatch) {
+      attempts.push({ method: 'semantic', confidence: 0.8, description: 'Context-based match from surrounding elements' })
+      await this.recordAttempt(domain, brokenSelector, contextMatch, 'context', true)
+      return { found: true, selector: contextMatch, confidence: 0.8, method: 'context', attempts }
+    }
+
+    // Strategy 7: Position Match
+    const positionMatch = this.positionMatch(cleanSelector, components)
+    if (positionMatch) {
+      attempts.push({ method: 'position', confidence: 0.75, description: 'Position-based fallback match' })
+      await this.recordAttempt(domain, brokenSelector, positionMatch, 'position', true)
+      return { found: true, selector: positionMatch, confidence: 0.75, method: 'position', attempts }
+    }
+
     attempts.push({ method: 'semantic', confidence: 0, description: 'No matching component found' })
     await this.recordAttempt(domain, brokenSelector, '', 'none', false)
     return { found: false, confidence: 0, method: 'none', attempts }
@@ -162,6 +186,37 @@ export class SelfHealingEngine {
     const entry = await this.memory.recall(domain)
     if (entry && entry.knowledge.knownElements.length > 0) {
       return entry.knowledge.knownElements[0].selectors[0]
+    }
+    return null
+  }
+
+  private async visualMatch(selector: string, components: ComponentIR[]): Promise<string | null> {
+    for (const c of components) {
+      const labelSim = stringSimilarity(selector, c.label)
+      if (labelSim > 0.6) {
+        return c.evidence[0]?.selector || `#${c.id}`
+      }
+    }
+    return null
+  }
+
+  private contextMatch(selector: string, components: ComponentIR[]): string | null {
+    const tokens = selector.split(' ').filter(t => t.length > 2)
+    for (const c of components) {
+      const allText = (c.label + ' ' + c.intent + ' ' + c.type).toLowerCase()
+      const matchCount = tokens.filter(t => allText.includes(t.toLowerCase())).length
+      if (matchCount >= tokens.length * 0.5) {
+        return c.evidence[0]?.selector || `#${c.id}`
+      }
+    }
+    return null
+  }
+
+  private positionMatch(selector: string, components: ComponentIR[]): string | null {
+    const typeToken = selector.split(' ')[0].toLowerCase()
+    const match = components.find(c => c.type.toLowerCase() === typeToken)
+    if (match) {
+      return match.evidence[0]?.selector || `#${match.id}`
     }
     return null
   }
