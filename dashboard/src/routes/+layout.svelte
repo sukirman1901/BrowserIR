@@ -21,13 +21,6 @@
 <!-- Mobile Top Header Bar -->
 <header class="mobile-header">
   <div class="mobile-brand">
-    <div class="logo-icon">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-        <path d="M2 12h20"/>
-      </svg>
-    </div>
     <span class="logo-title">BrowserIR</span>
   </div>
   
@@ -53,19 +46,7 @@
 <div class="app">
   <nav class="sidebar" class:open={mobileOpen}>
     <div class="logo">
-      <div class="logo-container">
-        <div class="logo-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-            <path d="M2 12h20"/>
-          </svg>
-        </div>
-        <div class="logo-text">
-          <h1>BrowserIR</h1>
-          <span class="subtitle">Runtime Engine</span>
-        </div>
-      </div>
+      <h1>BrowserIR</h1>
     </div>
 
     <div class="nav-links">
@@ -205,44 +186,18 @@
     margin-bottom: 1rem;
   }
 
-  .logo-container {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .logo-icon {
-    width: 38px;
-    height: 38px;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-purple) 100%);
-    color: #ffffff;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
-  }
-
-  .logo-text h1 {
-    font-size: 1.25rem;
+  .logo h1 {
+    font-size: 1.35rem;
     font-weight: 800;
-    color: var(--text);
-    letter-spacing: -0.02em;
-    line-height: 1.1;
+    color: var(--accent);
+    letter-spacing: -0.025em;
   }
 
   .logo-title {
-    font-size: 1.15rem;
+    font-size: 1.25rem;
     font-weight: 800;
-    color: var(--text);
-  }
-
-  .subtitle {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    color: var(--accent);
+    letter-spacing: -0.025em;
   }
 
   .nav-links {
