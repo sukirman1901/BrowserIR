@@ -10,21 +10,32 @@ export function connect(port = 3080) {
   if (!browser) return
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return
 
-  ws = new WebSocket(`ws://localhost:${port}`)
-  ws.onopen = () => wsConnected.set(true)
-  ws.onclose = () => {
-    wsConnected.set(false)
-    // Auto-reconnect after 3 seconds
-    setTimeout(() => connect(port), 3000)
-  }
-  ws.onerror = () => {
-    wsConnected.set(false)
-  }
-  ws.onmessage = (e) => {
-    const msg = JSON.parse(e.data)
-    if (msg.type === 'event') {
-      wsEvents.update(events => [...events.slice(-99), msg.data])
+  try {
+    ws = new WebSocket(`ws://localhost:${port}`)
+    ws.onopen = () => {
+      wsConnected.set(true)
     }
+    ws.onclose = () => {
+      wsConnected.set(false)
+      ws = null
+      // Auto-reconnect after 2 seconds
+      setTimeout(() => connect(port), 2000)
+    }
+    ws.onerror = () => {
+      wsConnected.set(false)
+    }
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data)
+        if (msg.type === 'event') {
+          wsEvents.update(events => [...events.slice(-99), msg.data])
+        }
+      } catch {}
+    }
+  } catch {
+    wsConnected.set(false)
+    ws = null
+    setTimeout(() => connect(port), 2000)
   }
 }
 
@@ -34,15 +45,38 @@ export function sendRpc(method: string, params: any = {}): Promise<any> {
       return reject(new Error('Not connected'))
     }
     const id = Math.random().toString(36).slice(2)
-    ws.send(JSON.stringify({ id, method, params }))
     const handler = (e: MessageEvent) => {
-      const msg = JSON.parse(e.data)
-      if (msg.id === id) {
-        ws!.removeEventListener('message', handler)
-        if (msg.error) reject(new Error(msg.error.message))
-        else resolve(msg.result)
-      }
+      try {
+        const msg = JSON.parse(e.data)
+        if (msg.id === id) {
+          ws!.removeEventListener('message', handler)
+          if (msg.error) reject(new Error(msg.error.message))
+          else resolve(msg.result)
+        }
+      } catch {}
     }
     ws.addEventListener('message', handler)
+    ws.send(JSON.stringify({ id, method, params }))
   })
+}
+
+export async function getDaemonStatus(restPort = 3081): Promise<any> {
+  // 1. Try WS if connected
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    try {
+      const result = await sendRpc('status')
+      if (result) return result
+    } catch {}
+  }
+
+  // 2. Fallback to REST API
+  try {
+    const res = await fetch(`http://localhost:${restPort}/status`)
+    if (res.ok) {
+      const data = await res.json()
+      return data
+    }
+  } catch {}
+
+  return { error: 'Daemon not available' }
 }

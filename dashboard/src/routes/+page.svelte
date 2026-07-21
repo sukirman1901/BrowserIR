@@ -1,26 +1,26 @@
 <script lang="ts">
-  import { wsConnected, sendRpc } from '$lib/stores/connection'
+  import { wsConnected, getDaemonStatus } from '$lib/stores/connection'
 
   let status = $state<any>(null)
   let loading = $state(true)
 
-  $effect(() => {
-    if ($wsConnected) {
-      loading = true
-      sendRpc('status')
-        .then((res) => {
-          status = res
-        })
-        .catch(() => {
-          status = { error: 'Daemon not available' }
-        })
-        .finally(() => {
-          loading = false
-        })
-    } else {
-      loading = true
-      status = null
+  async function updateStatus() {
+    loading = true
+    try {
+      status = await getDaemonStatus()
+    } catch {
+      status = { error: 'Daemon not available' }
+    } finally {
+      loading = false
     }
+  }
+
+  $effect(() => {
+    updateStatus()
+    const unsub = wsConnected.subscribe(() => {
+      updateStatus()
+    })
+    return () => unsub()
   })
 </script>
 
