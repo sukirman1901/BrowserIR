@@ -1,6 +1,7 @@
 import { chromium, Browser, BrowserContext, Page } from 'playwright'
 import type { BrowserIR } from '../ir/types.js'
 import { ExplainEngine } from '../engines/explain.js'
+import { VisualDiffEngine, type VisualDiffResult } from '../engines/visual-diff.js'
 
 export interface SessionOptions {
   headless?: boolean
@@ -13,6 +14,7 @@ export class BrowserSession {
   private context: BrowserContext | null = null
   private page: Page | null = null
   private explainEngine = new ExplainEngine()
+  private visualDiffEngine = new VisualDiffEngine()
   private options: SessionOptions
 
   constructor(options: SessionOptions = {}) {
@@ -233,8 +235,17 @@ export class BrowserSession {
 
   async screenshot(): Promise<string> {
     if (!this.page) throw new Error('Session not started')
-    const buffer = await this.page.screenshot({ type: 'png' })
-    return buffer.toString('base64')
+    return this.captureScreenshot()
+  }
+
+  async captureScreenshot(): Promise<string> {
+    if (!this.page) throw new Error('Session not started')
+    return this.visualDiffEngine.captureScreenshot(this.page)
+  }
+
+  async visualDiff(url1: string, url2: string): Promise<VisualDiffResult> {
+    if (!this.page) throw new Error('Session not started')
+    return this.visualDiffEngine.diffPage(this.page, url1, url2)
   }
 
   getPage(): Page | null {
