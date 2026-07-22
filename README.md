@@ -237,11 +237,16 @@ Expected: 33 tools listed.
 
 | Tool | Description |
 |------|-------------|
-| `bir_search` | Search and browse the web. Auto-crawls if index is empty. |
-| `bir_crawl` | Crawl URL and add to search index |
+| `bir_search` | Search with semantic understanding. Returns BrowserIR with intent, components, actions. Auto-crawls if needed. |
+| `bir_crawl` | Crawl URL, generate BrowserIR, and add to index |
 | `bir_search_stats` | Get search index statistics |
 
-**Note:** `bir_search` automatically crawls relevant documentation sites when the index is empty. No manual crawling needed!
+**Key Feature:** `bir_search` returns **BrowserIR** (not just URLs), including:
+- `intent` — Page purpose (documentation, pricing, login, etc.)
+- `components` — Interactive elements (buttons, forms, tables)
+- `actions` — Available user actions
+- `flow` — Multi-step workflows
+- `risk` — Security/compliance warnings
 
 ### Semantic Analysis
 

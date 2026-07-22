@@ -4,7 +4,7 @@ import { ExaSearch } from '../../../engines/exa-search.js'
 
 export function createSearchCommand(): Command {
   const search = new Command('search')
-    .description('Semantic web search (like Exa)')
+    .description('Semantic web search returning BrowserIR')
 
   search
     .command('query <text>')

@@ -11,8 +11,7 @@ Use this skill when the user wants to:
 - **Analyze** page structure semantically (sections, components, hierarchy)
 - **Read** any web content (articles, docs, API docs, blogs)
 - **Fetch** URLs directly without browser (HTML→Markdown)
-- **Search** the web for information (DuckDuckGo)
-- **Semantic Search** with intent understanding (like Exa)
+- **Search** the web with semantic understanding (returns BrowserIR)
 - **Crawl** websites and build search index
 - **Test** web UIs with semantic understanding
 - **Compare** page versions (diff)
@@ -57,7 +56,7 @@ BrowserIR compiles web pages into **semantic intermediate representations (IR)**
 23. **Dashboard** — Real-time semantic analysis monitoring with SSE (port 4848)
 24. **Web Fetch** — Fetch URLs directly without browser (HTML→Markdown conversion)
 25. **Web Search** — Search web via DuckDuckGo API
-26. **Semantic Search** — Intent-based search with vector embeddings (like Exa)
+26. **Semantic Search** — Intent-based search returning BrowserIR
 27. **Web Crawling** — BFS crawling with robots.txt, rate limiting
 28. **Intent Classification** — Understand user queries beyond keywords
 

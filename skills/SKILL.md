@@ -78,7 +78,7 @@ BrowserIR compiles web pages into **semantic intermediate representations (IR)**
 23. **Dashboard** — Real-time semantic analysis monitoring with SSE (port 4848)
 24. **Web Fetch** — Fetch URLs directly without browser (HTML→Markdown conversion)
 25. **Web Search** — Search web via DuckDuckGo API
-26. **Semantic Search** — Intent-based search with vector embeddings (like Exa)
+26. **Semantic Search** — Intent-based search returning BrowserIR
 27. **Web Crawling** — BFS crawling with robots.txt, rate limiting
 28. **Intent Classification** — Understand user queries beyond keywords
 
@@ -106,7 +106,7 @@ BrowserIR provides two distinct interfaces depending on how you interact:
 ### Semantic Search Engine
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_search` | Semantic search with intent understanding | `{ query: string, domain?: string, intent?: string, limit?: number }` |
+| `bir_search` | Semantic search returning BrowserIR. Auto-crawls if index empty. | `{ query: string, domain?: string, intent?: string, limit?: number }` |
 | `bir_crawl` | Crawl URL and add to search index | `{ url: string }` |
 | `bir_search_stats` | Get search index statistics | `{}` |
 | `bir_graph` | Get page structure as tree graph | `{ url: string }` |

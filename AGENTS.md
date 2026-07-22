@@ -21,7 +21,7 @@ Raw HTML → BrowserIR → Semantic Tree (sections, components, intent, flow, ri
 5. **Content Reading** — Universal reader for articles, docs, API docs, blogs
 6. **Web Fetch** — Fetch URLs directly without browser (HTML→Markdown conversion)
 7. **Web Search** — Search web via DuckDuckGo API
-8. **Semantic Search** — Intent-based search with vector embeddings (like Exa)
+8. **Semantic Search** — Intent-based search with vector embeddings
 9. **Web Crawling** — BFS crawling with robots.txt, rate limiting
 10. **Stealth** — Anti-detection (webdriver, chrome, permissions, plugins, languages)
 11. **Security** — Domain allowlisting, encryption (AES-256), output truncation
@@ -86,7 +86,7 @@ Use via MCP integration in Claude, Cursor, OpenCode, etc.
 - `bir_status` — Check daemon status
 
 #### Semantic Search Engine
-- `bir_search` — Semantic search with intent understanding (like Exa)
+- `bir_search` — Semantic search returning BrowserIR with intent, components, actions
 - `bir_crawl` — Crawl URL and add to search index
 - `bir_search_stats` — Get search index statistics
 
