@@ -12,7 +12,8 @@
   "files": [
     "dist",
     "skills",
-    "AGENTS.md"
+    "AGENTS.md",
+    ".opencode"
   ],
   "scripts": {
     "build": "tsup",
