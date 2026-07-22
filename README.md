@@ -9,29 +9,11 @@
 ## Table of Contents
 
 - [Installation](#installation)
-  - [Node.js Prerequisites](#nodejs-prerequisites)
-  - [Claude Code](#claude-code)
-  - [Cursor](#cursor)
-  - [Codex](#codex)
-  - [OpenCode](#opencode)
-  - [Manual MCP Config](#manual-mcp-config)
 - [Quick Start](#quick-start)
 - [How It Works](#how-it-works)
 - [MCP Server Setup](#mcp-server-setup)
 - [MCP Tools Reference](#mcp-tools-reference)
-  - [Core Navigation & Analysis](#core-navigation--analysis)
-  - [Web Fetch & Search](#web-fetch--search)
-  - [Semantic Search Engine](#semantic-search-engine)
-  - [Semantic Analysis](#semantic-analysis)
-  - [Memory System](#memory-system)
-  - [Knowledge Graph](#knowledge-graph)
-  - [Event System](#event-system)
-  - [Planner Engine](#planner-engine)
-  - [Self-Healing](#self-healing)
-  - [Multi-Browser](#multi-browser)
-  - [Agent Coordination](#agent-coordination)
 - [CLI Commands](#cli-commands)
-- [Skills Guide](#skills-guide)
 - [Architecture](#architecture)
 - [Search Engine Architecture](#search-engine-architecture)
 - [Troubleshooting](#troubleshooting)
@@ -48,18 +30,7 @@
 # Install Node.js 22+
 node --version  # Should be >= 22
 
-# Install BrowserIR globally (recommended - enables 'bir' CLI command)
-npm install -g .
-
-# Or install as dependency
-npm install @browserir/core
-```
-
-### Global Install (Recommended)
-
-Installing globally enables the `bir` CLI command:
-
-```bash
+# Install BrowserIR globally (enables 'bir' CLI command)
 npm install -g .
 
 # Verify installation
@@ -67,32 +38,29 @@ bir --version
 bir status
 ```
 
-### Claude Code
+### Platform-Specific Setup
 
-#### Official Marketplace
+#### Claude Code
 
-```
-/plugin install browserir@claude-plugins-official
-```
-
-#### Manual MCP Config
-
-Create or edit `.mcp.json` in your project root:
+Create or edit `.mcp.json` in your project root (or use the included one):
 
 ```json
 {
   "mcpServers": {
     "bir": {
       "command": "node",
-      "args": ["/path/to/BrowserIR/dist/adapters/mcp/index.js"]
+      "args": ["${CLAUDE_PROJECT_DIR}/dist/adapters/mcp/index.js"],
+      "cwd": "${CLAUDE_PROJECT_DIR}"
     }
   }
 }
 ```
 
-### Cursor
+Plugin manifest at `.claude-plugin/plugin.json` and skill at `skills/bir/SKILL.md` are auto-loaded.
 
-Create `.cursor/mcp.json` in your project root (or use the included one):
+#### Cursor
+
+The included `.cursor/mcp.json` and `.cursor/rules/bir.mdc` are auto-loaded:
 
 ```json
 {
@@ -106,27 +74,7 @@ Create `.cursor/mcp.json` in your project root (or use the included one):
 }
 ```
 
-The `.cursor/rules/bir.mdc` file auto-loads BrowserIR context when using Cursor Agent.
-
-### Codex
-
-Available via the official Codex plugin marketplace.
-
-#### Codex App
-
-- In the Codex app, click on **Plugins** in the sidebar.
-- Search for `BrowserIR` in the Browser section.
-- Click the `+` next to BrowserIR and follow the prompts.
-
-#### Codex CLI
-
-```
-/plugins
-```
-
-Search for BrowserIR and select `Install Plugin`.
-
-### OpenCode
+#### OpenCode
 
 Add the MCP server to your global `~/.config/opencode/opencode.json`:
 
@@ -143,18 +91,19 @@ Add the MCP server to your global `~/.config/opencode/opencode.json`:
 }
 ```
 
-Skills and agent are auto-discovered from `.opencode/skills/bir/SKILL.md` and `.opencode/agents/browserir.md`.
+Skills auto-discovered from `.opencode/skills/bir/SKILL.md`.
 
-### Manual MCP Config
+#### Manual MCP Config
 
-For platforms that don't auto-register the MCP server, add the MCP server to your platform's MCP configuration:
+For any platform that supports MCP stdio servers:
 
 ```json
 {
   "mcpServers": {
     "bir": {
       "command": "node",
-      "args": ["/path/to/BrowserIR/dist/adapters/mcp/index.js"]
+      "args": ["/path/to/BrowserIR/dist/adapters/mcp/index.js"],
+      "cwd": "/path/to/BrowserIR"
     }
   }
 }
@@ -164,7 +113,7 @@ For platforms that don't auto-register the MCP server, add the MCP server to you
 
 ## Quick Start
 
-### Option 1: Use with AI Tools (Recommended)
+### Option 1: Use with AI Tools
 
 After installation, just ask your AI agent naturally:
 
@@ -172,39 +121,37 @@ After installation, just ask your AI agent naturally:
 > "analyze https://example.com"
 > "find Stripe pricing pages"
 
-The AI will automatically use BrowserIR's MCP tools.
+The AI will automatically use BrowserIR's 36 MCP tools.
 
 ### Option 2: Use CLI directly
 
 ```bash
-# Search with natural language
-bir search query "Next.js documentation"
+# Start daemon (required for CLI commands)
+npm start
+# or: node dist/daemon/server.js
 
 # Analyze a page
 bir explain https://example.com
 
-# Check status
+# Check daemon status
 bir status
+
+# Semantic search
+bir search query "Next.js documentation"
 ```
-
-### Example Session
-
-**User:** "Analyze https://nusaiba.dev"
-
-The AI will:
-
-1. Load `bir` skill → call `bir_explain`
-2. Get semantic IR with intent, components, risks
-3. Present findings with recommendations
 
 ---
 
 ## How It Works
 
+```
+Raw HTML → BrowserIR → Semantic Tree (sections, components, intent, flow, risk)
+```
+
 1. You ask something like *"analyze https://example.com"*
 2. The AI detects the intent → matches the **bir** skill
 3. The skill provides a methodology (step-by-step guide)
-4. The AI calls MCP tools like `bir_explain`, `bir_click`, `bir_flow_detect`
+4. The AI calls MCP tools like `bir_explain`, `bir_click`, `bir_search`
 5. Results are analyzed and presented
 
 The AI follows a semantic understanding methodology: **Explain → Analyze → Interact → Test → Learn**
@@ -213,7 +160,15 @@ The AI follows a semantic understanding methodology: **Explain → Analyze → I
 
 ## MCP Server Setup
 
-The BrowserIR MCP server provides 36 tools via stdio transport using TypeScript.
+The BrowserIR MCP server provides 36 tools via stdio transport. The MCP server auto-starts the daemon if not running.
+
+### Daemon Ports
+
+| Service | Port |
+|--------|------|
+| WebSocket | 3080 |
+| REST API | 3081 |
+| Dashboard | 4848 |
 
 ### Verify MCP Server
 
@@ -227,137 +182,121 @@ Expected: 36 tools listed.
 
 ## MCP Tools Reference
 
-### Core Navigation & Analysis
+### Core Navigation & Analysis (8)
 
-| Tool | Description |
-|------|-------------|
-| `bir_navigate` | Navigate to URL and return status |
-| `bir_explain` | Analyze page and return semantic BrowserIR |
-| `bir_analyze` | Create a BrowserSession for analysis and interaction |
-| `bir_click` | Click element by ref (@e1, @e2, ...) with self-healing |
-| `bir_screenshot` | Take screenshot of current page |
-| `bir_graph` | Get page structure as tree graph |
-| `bir_tabs` | List all browser tabs |
-| `bir_status` | Check daemon status |
+| Tool | Description | Input |
+|------|-------------|-------|
+| `bir_explain` | Analyze page and return semantic BrowserIR | `{ url }` |
+| `bir_analyze` | Create a BrowserSession for analysis and interaction | `{ url }` |
+| `bir_click` | Click element by ref (@e1, @e2, ...) with self-healing | `{ ref }` |
+| `bir_navigate` | Navigate to URL in browser | `{ url }` |
+| `bir_screenshot` | Take screenshot of current page | `{}` |
+| `bir_graph` | Get page structure as tree graph | `{ url }` |
+| `bir_tabs` | List all open browser tabs | `{}` |
+| `bir_status` | Check daemon status | `{}` |
 
-### Web Fetch & Search
+### Web Fetch & Search (3)
 
-| Tool | Description |
-|------|-------------|
-| `bir_webfetch` | Fetch URL with semantic understanding (HTML→Markdown) |
-| `bir_websearch` | Search web with semantic results |
-| `bir_analyze_content` | Analyze text content and return semantic understanding |
+| Tool | Description | Input |
+|------|-------------|-------|
+| `bir_webfetch` | Fetch URL with semantic understanding (HTML→Markdown) | `{ url, format? }` |
+| `bir_websearch` | Search web with semantic results | `{ query, numResults? }` |
+| `bir_analyze_content` | Analyze text content and return semantic understanding | `{ content, type? }` |
 
-### Semantic Search Engine
+### Semantic Search Engine (3)
 
-| Tool | Description |
-|------|-------------|
-| `bir_search` | Search with semantic understanding. Returns BrowserIR with intent, components, actions. Auto-crawls if needed. |
-| `bir_crawl` | Crawl URL, generate BrowserIR, and add to index |
-| `bir_search_stats` | Get search index statistics |
+| Tool | Description | Input |
+|------|-------------|-------|
+| `bir_search` | Semantic search returning BrowserIR. Auto-crawls if index empty. | `{ query, domain?, intent?, limit? }` |
+| `bir_crawl` | Crawl URL and add to search index | `{ url, depth? }` |
+| `bir_search_stats` | Get search index statistics | `{}` |
 
-**Key Feature:** `bir_search` returns **BrowserIR** (not just URLs), including:
-- `intent` — Page purpose (documentation, pricing, login, etc.)
-- `components` — Interactive elements (buttons, forms, tables)
-- `actions` — Available user actions
-- `flow` — Multi-step workflows
-- `risk` — Security/compliance warnings
+### Semantic Analysis (3)
 
-### Semantic Analysis
+| Tool | Description | Input |
+|------|-------------|-------|
+| `bir_flow_detect` | Detect multi-step flows from captured events | `{ sessionId }` |
+| `bir_flow_list` | List known flows for a domain | `{ domain }` |
+| `bir_diff_compare` | Compare two BrowserIR snapshots semantically | `{ irBefore, irAfter }` |
 
-| Tool | Description |
-|------|-------------|
-| `bir_flow_detect` | Detect multi-step flows from captured events |
-| `bir_flow_list` | List known flows for a domain |
-| `bir_diff_compare` | Compare two BrowserIR snapshots semantically |
+### Memory System (2)
 
-### Memory System
+| Tool | Description | Input |
+|------|-------------|-------|
+| `bir_memory_recall` | Recall learned knowledge about a domain | `{ domain }` |
+| `bir_memory_store` | Store BrowserIR knowledge about a domain | `{ domain, ir }` |
 
-| Tool | Description |
-|------|-------------|
-| `bir_memory_recall` | Recall learned knowledge about a domain |
-| `bir_memory_store` | Store BrowserIR knowledge about a domain |
+### Knowledge Graph (4)
 
-### Knowledge Graph
+| Tool | Description | Input |
+|------|-------------|-------|
+| `bir_knowledge_add_node` | Add node to knowledge graph | `{ type, label, properties? }` |
+| `bir_knowledge_add_edge` | Add edge between knowledge nodes | `{ source, target, type, weight? }` |
+| `bir_knowledge_search` | Search knowledge graph by label or type | `{ query, type? }` |
+| `bir_knowledge_traverse` | Traverse graph from starting node | `{ startId, maxDepth? }` |
 
-| Tool | Description |
-|------|-------------|
-| `bir_knowledge_add_node` | Add node to knowledge graph |
-| `bir_knowledge_add_edge` | Add edge between knowledge nodes |
-| `bir_knowledge_search` | Search knowledge graph by label or type |
-| `bir_knowledge_traverse` | Traverse graph from starting node |
+### Event System (2)
 
-### Event System
+| Tool | Description | Input |
+|------|-------------|-------|
+| `bir_events_capture` | Capture custom event into event stream | `{ type, sessionId, data? }` |
+| `bir_events_get` | Query captured events for a session | `{ sessionId, query? }` |
 
-| Tool | Description |
-|------|-------------|
-| `bir_events_capture` | Capture custom event into event stream |
-| `bir_events_get` | Query captured events for a session |
+### Planner Engine (3)
 
-### Planner Engine
+| Tool | Description | Input |
+|------|-------------|-------|
+| `bir_planner_create` | Create execution plan for a goal | `{ goal, domain }` |
+| `bir_planner_execute` | Execute a plan by ID | `{ planId }` |
+| `bir_planner_status` | Get status of a plan | `{ planId }` |
 
-| Tool | Description |
-|------|-------------|
-| `bir_planner_create` | Create execution plan for a goal |
-| `bir_planner_execute` | Execute a plan by ID |
-| `bir_planner_status` | Get status of a plan |
+### Self-Healing (1)
 
-### Self-Healing
+| Tool | Description | Input |
+|------|-------------|-------|
+| `bir_heal_find` | Find replacement for broken selector using semantic IR | `{ brokenSelector, ir, intent? }` |
 
-| Tool | Description |
-|------|-------------|
-| `bir_heal_find` | Find replacement for broken selector using semantic IR |
+### Multi-Browser (3)
 
-### Multi-Browser
+| Tool | Description | Input |
+|------|-------------|-------|
+| `bir_multi_create_session` | Create new multi-browser session | `{}` |
+| `bir_multi_execute` | Execute task across multiple tabs | `{ task }` |
+| `bir_multi_sessions` | List all multi-browser sessions | `{}` |
 
-| Tool | Description |
-|------|-------------|
-| `bir_multi_create_session` | Create new multi-browser session |
-| `bir_multi_execute` | Execute task across multiple tabs |
-| `bir_multi_sessions` | List all multi-browser sessions |
+### Agent Coordination (4)
 
-### Agent Coordination
-
-| Tool | Description |
-|------|-------------|
-| `bir_agent_register` | Register agent for coordination |
-| `bir_agent_unregister` | Unregister agent |
-| `bir_agent_claim` | Claim work on specific action |
-| `bir_agent_graph` | Show agent dependency graph |
+| Tool | Description | Input |
+|------|-------------|-------|
+| `bir_agent_register` | Register agent for coordination | `{ id, name, role, sessionId, status? }` |
+| `bir_agent_unregister` | Unregister agent | `{ id }` |
+| `bir_agent_claim` | Claim work on specific action | `{ agentId, type, target?, value? }` |
+| `bir_agent_graph` | Show agent dependency graph | `{}` |
 
 ---
 
 ## CLI Commands
 
 ```bash
+# Start daemon (required before CLI commands)
+npm start
+# or: node dist/daemon/server.js
+
 # Core Commands
-bir explain <url>              # Get semantic IR of a page
-bir click <ref>                # Click element by ref (e.g. @e3) with self-healing
-bir screenshot                 # Take screenshot
+bir explain [url]              # Get semantic IR of a page
+bir status                     # Check daemon status
+bir click <ref>                # Click element by ref (e.g. @e3)
 bir graph <url>                # Show page structure as tree
 bir diff <v1.json> <v2.json>   # Compare 2 IR snapshots
-bir test <test-file>           # Run E2E tests from JSON file
 bir memory recall <domain>     # Recall stored domain knowledge
 bir memory store <json>        # Store domain knowledge
-bir status                     # Check daemon status
+bir test <test-file>           # Run E2E tests from JSON file
 
-# Search Engine Commands
+# Search Engine
 bir search query <text>        # Semantic search with natural language
 bir search crawl <url>         # Crawl URL and add to index
 bir search stats               # Show search index statistics
 ```
-
----
-
-## Skills Guide
-
-The `bir` skill guides the AI through structured browser analysis. It auto-loads when the AI detects browser-related intent.
-
-| Skill | Triggers When User Says... |
-|-------|---------------------------|
-| `bir` | "analyze", "explain", "understand", "browser", "search", "fetch", "crawl" |
-
-Skills load on-demand via the platform's skill system. The AI follows the skill's methodology step by step.
 
 ---
 
@@ -368,19 +307,25 @@ Skills load on-demand via the platform's skill system. The AI follows the skill'
 │                  AI Tool (any)                       │
 │           Claude / Cursor / OpenCode / Codex         │
 └───────────────────────┬─────────────────────────────┘
-                        │ MCP or CLI
+                        │ MCP (stdio) or CLI
                         ▼
 ┌─────────────────────────────────────────────────────┐
 │                  BrowserIR                           │
 │            Semantic Understanding Engine             │
 ├─────────────────────────────────────────────────────┤
-│  • explain() → BrowserIR (intent, flow, risk)        │
-│  • search() → Semantic search with intent            │
-│  • crawl() → Web crawling with BFS                   │
-│  • memory → learned patterns                         │
-│  • flow → multi-step detection                       │
-│  • diff → change tracking                            │
-│  • agent → multi-agent coordination                  │
+│  MCP Server (36 tools)  │  CLI (8 commands)         │
+│  REST API (port 3081)   │  WebSocket (port 3080)    │
+│  Dashboard SSE (port 4848)                          │
+├─────────────────────────────────────────────────────┤
+│  Engine Manager (10 engines):                       │
+│  Memory · Diff · Events · Self-Healing · Flow       │
+│  Knowledge · Planner · Multi-Browser · Agent         │
+│  SessionMemory                                       │
+│  + ExaSearch (SemanticIndexer + IntentClassifier)   │
+│  + WebCrawler · ContentExtractor · DocParser        │
+│  + StealthManager · SecurityManager · InputManager  │
+│  + FileManager · TestRunner · NetworkCapture        │
+│  + ConsoleCapture · ScriptInjection · VisualDiff     │
 └───────────────────────┬─────────────────────────────┘
                         │ Playwright/CDP
                         ▼
@@ -392,32 +337,13 @@ Skills load on-demand via the platform's skill system. The AI follows the skill'
 ## Search Engine Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  User Query                          │
-│  "find SaaS pricing pages"                          │
-└───────────────────────┬─────────────────────────────┘
-                        ▼
-┌─────────────────────────────────────────────────────┐
-│              Intent Detection                        │
-│  • Category: "pricing"                              │
-│  • Keywords: ["pricing", "plans"]                   │
-└───────────────────────┬─────────────────────────────┘
-                        ▼
-┌─────────────────────────────────────────────────────┐
-│            Semantic Search Engine                     │
-│  • Query Embedding (384 dimensions)                  │
-│  • Cosine Similarity with Indexed Pages              │
-│  • Filter by Intent/Domain                           │
-│  • Rank by Score                                     │
-└───────────────────────┬─────────────────────────────┘
-                        ▼
-┌─────────────────────────────────────────────────────┐
-│              Results                                 │
-│  [                                                   │
-│    { url, title, score, intent, ir },               │
-│    ...                                               │
-│  ]                                                   │
-└─────────────────────────────────────────────────────┘
+User Query → IntentClassifier → SemanticIndexer (SQLite)
+                              ↓ (if empty)
+                             WebCrawler (BFS, robots.txt, rate limiting)
+                              ↓
+                             IndexPage → EmbeddingEngine (384 dims)
+                              ↓
+                             SearchResult (url, title, score, intent, ir)
 ```
 
 ---
@@ -428,24 +354,21 @@ Skills load on-demand via the platform's skill system. The AI follows the skill'
 
 ```bash
 # Verify MCP server works
-node dist/adapters/mcp/index.js
-# Should start a stdio MCP server — test with:
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node dist/adapters/mcp/index.js
+# Expected: 36 tools listed
 ```
 
-Expected output: 36 tools listed.
+### Daemon not starting
 
-### OpenCode plugin not loading
+```bash
+# Start daemon manually
+npm start
+# or: node dist/daemon/server.js
 
-1. Check `opencode.json` for the plugin line
-2. Restart OpenCode
-3. Check logs
-
-### Claude Code plugin not loading
-
-1. Check `.mcp.json` MCP server config
-2. Restart Claude Code
-3. Verify: `/plugin list` should show browserir
+# Check health
+curl http://localhost:3081/health
+# Expected: {"status":"healthy"}
+```
 
 ### Build errors
 
@@ -461,7 +384,7 @@ node --version
 
 - **Node.js 22+**
 - **Playwright** (auto-installed)
-- Any supported AI coding agent (Claude Code, Cursor, Codex, OpenCode)
+- Any supported AI coding agent (Claude Code, Cursor, OpenCode, Codex)
 
 ---
 

@@ -55,10 +55,10 @@ Use this skill when the user wants to:
 
 BrowserIR compiles web pages into **semantic intermediate representations (IR)** — typed structures that AI can reason about. It's a **semantic understanding engine**, not just browser automation.
 
-### Key Capabilities (28)
+### Key Capabilities
 
-1. **Semantic Analysis** — Understands page purpose with 20+ intent categories
-2. **Intent Recognition** — Classifies page type (auth, purchase, documentation, tutorial, blog, api, forum, chat, dashboard, settings, profile, checkout, payment, subscription, support, feedback, contact, social, media, download)
+1. **Semantic Analysis** — Understands page purpose with 24 intent categories
+2. **Intent Recognition** — Classifies page type (auth, purchase, documentation, tutorial, blog, api_reference, forum, chat, dashboard, settings, profile, checkout, payment, subscription, support, feedback, contact, social, media, download)
 3. **Risk Assessment** — Critical severity detection for credentials, financial, PII, destructive actions. Compliance checks (GDPR, PCI, HIPAA, SOC2, CCPA)
 4. **Flow Detection** — Multi-source detection (structure, events, network) + flow templates + learning
 5. **Memory System** — Learns from past interactions (patterns, selectors, flows, errors, performance)
@@ -173,9 +173,9 @@ BrowserIR provides two distinct interfaces depending on how you interact:
 ### Agent Coordination
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_agent_register` | Register agent for coordination | `{ id: string, name: string, role: string, sessionId: string }` |
+| `bir_agent_register` | Register agent for coordination | `{ id: string, name: string, role: string, sessionId: string, status?: string }` |
 | `bir_agent_unregister` | Unregister agent | `{ id: string }` |
-| `bir_agent_claim` | Claim work on specific action | `{ agentId: string, type: string, target?: string }` |
+| `bir_agent_claim` | Claim work on specific action | `{ agentId: string, type: string, target?: string, value?: string }` |
 | `bir_agent_graph` | Show agent dependency graph | `{}` |
 
 ---
@@ -183,15 +183,24 @@ BrowserIR provides two distinct interfaces depending on how you interact:
 ## CLI Commands (Terminal Usage)
 
 ```bash
-bir daemon start               # Start BrowserIR daemon
-bir explain [url]              # Get semantic IR in terminal
-bir click @e3                  # Click element by semantic ref
-bir screenshot                 # Take screenshot of current page
+# Start daemon (required before CLI commands)
+npm start
+# or: node dist/daemon/server.js
+
+# Core Commands
+bir explain [url]              # Get semantic IR of a page
+bir status                     # Check daemon status
+bir click <ref>                # Click element by ref (e.g. @e3)
 bir graph <url>                # Show page structure as tree
-bir diff <before.json> <after.json>   # Compare 2 IR JSON files
+bir diff <v1.json> <v2.json>   # Compare 2 IR snapshots
 bir memory recall <domain>     # Recall domain knowledge
 bir memory store <json>        # Store domain knowledge
-bir status                     # Check daemon status
+bir test <test-file>            # Run E2E tests from JSON
+
+# Search Engine
+bir search query <text>        # Semantic search
+bir search crawl <url>         # Crawl and index
+bir search stats               # Index statistics
 ```
 
 ---
@@ -200,7 +209,7 @@ bir status                     # Check daemon status
 
 ### Step 1: Start Daemon
 ```bash
-bir daemon start
+npm start
 # or: node dist/daemon/server.js
 ```
 
@@ -267,6 +276,6 @@ bir_agent_graph()
 
 ## Troubleshooting
 
-- **Daemon not running**: Run `node dist/daemon/server.js` or `bir daemon start`.
+- **Daemon not running**: Run `node dist/daemon/server.js` or `npm start`.
 - **Ref not found**: Re-run `bir_explain` to refresh component refs.
 - **Broken selector**: Use `bir_heal_find` to find replacement matching intent.

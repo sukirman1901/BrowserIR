@@ -12,54 +12,85 @@ Raw HTML → BrowserIR → Semantic Tree (sections, components, intent, flow, ri
 
 **Key insight:** BrowserIR doesn't just "see" the page — it "understands" what the page is for, what actions are available, and what risks exist.
 
-## Core Capabilities (36)
+## Core Capabilities
 
-1. **Semantic Analysis** — 20+ intent categories, 38 component types
-2. **Risk Assessment** — Critical severity, compliance checks (GDPR, PCI, HIPAA, SOC2, CCPA)
-3. **Flow Detection** — Multi-source (structure, events, network) + templates + learning
-4. **Self-Healing** — 8 strategies + selector learning
-5. **Content Reading** — Universal reader for articles, docs, API docs, blogs
-6. **Web Fetch** — Fetch URLs directly without browser (HTML→Markdown conversion)
-7. **Web Search** — Search web via DuckDuckGo API
-8. **Semantic Search** — Intent-based search with vector embeddings
-9. **Web Crawling** — BFS crawling with robots.txt, rate limiting
-10. **Stealth** — Anti-detection (webdriver, chrome, permissions, plugins, languages)
-11. **Security** — Domain allowlisting, encryption (AES-256), output truncation
-12. **E2E Testing** — 22 assertion types + HTML/JSON reports
-13. **Memory** — Patterns, selectors, flows, errors, performance + learning
-14. **Multi-Browser** — Pool management, parallel execution, idle cleanup
-15. **Dashboard** — Real-time SSE monitoring (port 4848)
+### IR Types (src/ir/types.ts)
 
-## Quick Start
+- **31 Component Types** — field, button, link, text, image, table, dropdown, checkbox, radio, toggle, modal, tooltip, accordion, tabs, code_block, snippet, pre, video, audio, embed, form, fieldset, legend, label, textarea, select, option, progress, meter, output, details, summary, dialog
+- **24 Intent Categories** — authentication, purchase, content_consumption, search, navigation, form_submission, data_entry, documentation, tutorial, blog, api_reference, forum, chat, dashboard, settings, profile, checkout, payment, subscription, support, feedback, contact, social, media, download
+- **9 Section Roles** — navigation, form, table, dialog, content, modal, sidebar, footer, header
+- **9 Evidence Sources** — dom, a11y, react, vue, angular, vision, network, meta, schema_org
+- **5 Compliance Standards** — GDPR, PCI, HIPAA, SOC2, CCPA
+- **4 Risk Severities** — low, medium, high, critical
 
-### Start daemon
-```bash
-bir daemon start
-# or: node dist/daemon/server.js
-```
+### Engines (src/engines/ — 44 files)
 
-### Explain a page
-```bash
-bir explain https://example.com
-# Returns: BrowserIR with sections, components, intent, flow
-```
+1. **Semantic Analyzer** — Page intent classification with 24 categories
+2. **Memory Engine** — Store/recall domain knowledge (SQLite)
+3. **Diff Engine** — Semantic, structural, state, and intent diffing
+4. **Self-Healing** — 8 strategies (history, text, ARIA, semantic, memory, visual, context, position)
+5. **Flow Detection** — Multi-source (structure, events, network) + templates
+6. **Knowledge Graph** — Node/edge graph with traversal
+7. **Planner Engine** — Goal-based execution planning
+8. **Multi-Browser** — Pool management, parallel tab execution
+9. **Agent Coordinator** — Multi-agent coordination with claim system
+10. **Session Memory** — Per-session state persistence
+11. **Content Extractor** — Universal reader for articles, docs, API docs
+12. **Doc Parser** — Documentation structure, navigation, code examples
+13. **ExaSearch** — Semantic search (SemanticIndexer + IntentClassifier + WebCrawler)
+14. **Embedding Engine** — 384-dimension vector embeddings
+15. **Intent Classifier** — Query intent classification for search
+16. **Web Crawler** — BFS with robots.txt, rate limiting
+17. **Auto-Indexer** — Automatic page indexing
+18. **Network Capture** — HTTP request/response interception
+19. **Console Capture** — Browser console logs and JS errors
+20. **Script Injection** — Pre-load JavaScript injection
+21. **State Manager** — Cookie/storage state management
+22. **Element Highlight** — Visual debugging with outlines
+23. **Test Runner** — E2E test execution from JSON
+24. **Visual Diff** — Visual regression with pixelmatch
+25. **Failure Analyzer** — Test failure analysis and diagnosis
+26. **File Manager** — Download, upload, PDF export
+27. **Session Manager** — Idle timeout, auto-save, AES-256 encryption
+28. **Stealth Manager** — Anti-detection (webdriver, chrome, permissions)
+29. **Security Manager** — Domain allowlisting, offline mode
+30. **Input Manager** — Mouse, keyboard, dialog, frame switching
+31. **Graph Visualization** — Page structure as graph data
+32. **Streaming Session** — Real-time session streaming
 
-### CLI Commands
+### MCP Server (src/adapters/mcp/)
+
+- **MCP server name**: `browserir`
+- **36 tools** via stdio transport
+- Auto-starts daemon if not running
+- Registered in `index.ts:109-165`
+
+### Daemon (src/daemon/)
+
+- **Unix socket** transport for CLI
+- **WebSocket** on port 3080
+- **REST API** on port 3081
+- **Dashboard SSE** on port 4848
+- **10 engines** via EngineManager
+
+### CLI (src/adapters/cli/)
+
 ```bash
 bir explain [url]              # Get semantic IR of page
-bir click @e3                  # Click element by ref with self-healing
-bir screenshot                 # Take screenshot
-bir diff compare <ir1> <ir2>   # Compare two IRs
+bir click <ref>                # Click by ref (e.g. @e3)
+bir screenshot                 # Screenshot
+bir graph <url>                # Page structure as tree
+bir diff <v1.json> <v2.json>   # Compare 2 IR snapshots
+bir memory recall <domain>     # Recall domain knowledge
+bir memory store <json>        # Store domain knowledge
 bir test <test-file>           # Run E2E tests from JSON
-bir memory recall <domain>     # Recall known patterns
-bir memory store <json>        # Store knowledge
-bir flow detect [url]          # Detect multi-step flows
-bir graph show                 # Show agent dependency graph
 bir status                     # Check daemon status
-```
 
-### MCP Tools (36 tools)
-Use via MCP integration in Claude, Cursor, OpenCode, etc.
+# Search subcommands
+bir search query <text>        # Semantic search
+bir search crawl <url>         # Crawl and index
+bir search stats               # Index statistics
+```
 
 ### MCP Server Configuration
 
@@ -67,21 +98,24 @@ Use via MCP integration in Claude, Cursor, OpenCode, etc.
 {
   "mcpServers": {
     "bir": {
-      "command": ["node", "/path/to/BrowserIR/dist/adapters/mcp/index.js"],
+      "command": "node",
+      "args": ["/path/to/BrowserIR/dist/adapters/mcp/index.js"],
       "cwd": "/path/to/BrowserIR"
     }
   }
 }
 ```
 
-#### Core Navigation & Analysis
-- `bir_navigate` — Navigate to URL and return status
+### MCP Tools (36 tools)
+
+ #### Core Navigation & Analysis
 - `bir_explain` — Analyze page and return semantic BrowserIR
-- `bir_analyze` — Create a BrowserSession for analysis and interaction
+- `bir_analyze` — Create a BrowserSession for analysis
 - `bir_click` — Click element by ref (@e1, @e2, ...) with self-healing
+- `bir_navigate` — Navigate to URL in browser
 - `bir_screenshot` — Take screenshot of current page
 - `bir_graph` — Get page structure as tree graph
-- `bir_tabs` — List all browser tabs
+- `bir_tabs` — List all open browser tabs
 - `bir_status` — Check daemon status
 
 #### Web Fetch & Search
@@ -90,7 +124,7 @@ Use via MCP integration in Claude, Cursor, OpenCode, etc.
 - `bir_analyze_content` — Analyze text content and return semantic understanding
 
 #### Semantic Search Engine
-- `bir_search` — Semantic search returning BrowserIR with intent, components, actions
+- `bir_search` — Semantic search returning BrowserIR. Auto-crawls if needed.
 - `bir_crawl` — Crawl URL and add to search index
 - `bir_search_stats` — Get search index statistics
 
@@ -136,234 +170,65 @@ Use via MCP integration in Claude, Cursor, OpenCode, etc.
 
 ### 1. BrowserIR (Semantic Representation)
 
-Every page becomes a structured IR:
-
 ```typescript
 interface BrowserIR {
-  page: {
-    url: string
-    title: string
-    intent: {
-      primary: string          // What the page is for
-      category: 'auth' | 'purchase' | 'search' | 'navigation' | ...
-      actions: ActionIR[]      // Available actions
-      flow: FlowStep[]         // Multi-step flow
-      risk: RiskAssessment[]   // Risk warnings
-    }
-    sections: SectionIR[]      // Semantic sections
-    metadata: PageMetadata     // Framework, DOM size, etc
-  }
-  snapshot: Snapshot           // Version tracking
-  evidence: EvidenceChain      // Why we think this
+  version: '0.1'
+  page: PageIR
+  snapshot: Snapshot
+  evidence: EvidenceChain
+}
+
+interface PageIR {
+  id: string
+  url: string
+  title: string
+  intent: PageIntent    // primary, category, actions[], flow[], risk[]
+  sections: SectionIR[]
+  metadata: PageMetadata
 }
 ```
 
 ### 2. Component Refs (`@e1`, `@e2`, ...)
 
-Every interactive element gets a unique ref:
-
-```
-- heading "Login" [@e1]
-- form [@e2]
-  - field "Email" [@e3]
-  - field "Password" [@e4]
-  - button "Submit" [@e5]
-- link "Forgot password?" [@e6]
-```
-
-Use refs for deterministic interaction:
+Every interactive element gets a unique ref for deterministic interaction:
 ```bash
-bir click @e5
+bir click @e5  # Click by ref, not CSS selector
 ```
 
-### 3. Intent Recognition
+### 3. Intent Categories (24)
 
-BrowserIR automatically classifies page intent:
+| Category | Risk |
+|----------|------|
+| `authentication` | medium (credentials) |
+| `purchase` / `checkout` / `payment` | high (money) |
+| `data_entry` / `form_submission` | medium (data) |
+| `content_consumption` / `blog` / `documentation` | low |
+| `navigation` / `search` | low |
+| `settings` / `profile` | medium |
+| `subscription` | high (recurring) |
 
-| Category | Example | Risk Level |
-|----------|---------|------------|
-| `authentication` | Login/register page | medium (credentials) |
-| `purchase` | Checkout page | high (money) |
-| `data_entry` | Form submission | medium (data) |
-| `content_consumption` | Article/blog | low |
-| `navigation` | Menu/search | low |
-| `destructive` | Delete/cancel | high (irreversible) |
-
-### 4. Flow Detection
-
-Detects multi-step processes:
-
-```bash
-bir flow detect https://example.com/checkout
-```
-
-Output:
-```json
-{
-  "flow": "checkout",
-  "steps": [
-    { "order": 1, "action": "fill shipping info", "required": true },
-    { "order": 2, "action": "select payment", "required": true },
-    { "order": 3, "action": "confirm order", "required": true }
-  ]
-}
-```
-
-### 5. Memory System
-
-Learn from past interactions:
-
-```bash
-# Store knowledge about a site
-bir memory store '{"domain":"shop.com","purpose":"e-commerce","commonFlows":["browse","cart","checkout"]}'
-
-# Recall knowledge
-bir memory recall shop.com
-```
-
-### 6. Evidence Chains
-
-BrowserIR explains WHY it thinks something is what it is:
-
-```json
-{
-  "component": "button Submit",
-  "evidence": [
-    { "source": "dom", "selector": "button[type=submit]", "confidence": 0.95 },
-    { "source": "a11y", "role": "button", "confidence": 0.90 },
-    { "source": "visual", "position": "bottom-right", "confidence": 0.80 }
-  ]
-}
-```
-
-## Use Cases by AI Tool
-
-### Claude (Desktop/Web)
-- Deep page analysis
-- Accessibility audit
-- Security review
-- Documentation generation
-
-### Cursor
-- UI debugging
-- Component verification
-- E2E test generation
-- Refactor impact analysis
-
-### OpenCode
-- Full testing pipeline (combine with browser-smoke)
-- Smoke testing
-- Visual regression
-- Network debugging
-- Failure analysis
-- Console error tracking
-- Security analysis
-- File operations (download/upload)
-- Session management
-
-### Codex / Pi.dev
-- Quick page queries
-- Scripting automation
-- CI/CD integration
-
-## Multi-Platform Integration
-
-BrowserIR integrates with multiple AI platforms:
-
-### Claude Code
-```
-.claude-plugin/plugin.json   # Plugin manifest
-.mcp.json                    # MCP server config (uses ${CLAUDE_PROJECT_DIR})
-skills/bir/SKILL.md          # Plugin skill
-```
-
-### OpenCode
-```
-.opencode/skills/bir/SKILL.md   # Skill (auto-discovered)
-.opencode/agents/browserir.md   # Subagent (mode: subagent)
-.opencode/plugins/browserir.js  # Plugin (skill injection)
-# MCP registered in global ~/.config/opencode/opencode.json
-```
-
-### Cursor
-```
-.cursor/rules/bir.mdc    # Rule with MCP tool docs
-.cursor/mcp.json         # MCP server config (uses ${workspaceFolder})
-```
-
-### Cross-Platform
-```
-.agents/skills/bir/SKILL.md   # Agent-compatible skill
-```
-
-## Architecture
+### 4. Multi-Platform Integration
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  AI Tool (any)                       │
-│           Claude / Cursor / OpenCode / Codex         │
-└───────────────────────┬─────────────────────────────┘
-                        │ MCP or CLI
-                        ▼
-┌─────────────────────────────────────────────────────┐
-│                  BrowserIR                           │
-│            Semantic Understanding Engine             │
-├─────────────────────────────────────────────────────┤
-│  • explain() → BrowserIR (intent, flow, risk)        │
-│  • memory → learned patterns                         │
-│  • flow → multi-step detection                       │
-│  • diff → change tracking                            │
-│  • agent → multi-agent coordination                  │
-└───────────────────────┬─────────────────────────────┘
-                        │ Playwright/CDP
-                        ▼
-┌─────────────────────────────────────────────────────┐
-│             Browser (Chrome/Firefox/WebKit)          │
-└─────────────────────────────────────────────────────┘
+BrowserIR/
+├── .claude-plugin/plugin.json    # Claude Code plugin manifest
+├── .mcp.json                     # Claude Code MCP config (${CLAUDE_PROJECT_DIR})
+├── skills/bir/SKILL.md           # Claude Code plugin skill
+├── .cursor/rules/bir.mdc         # Cursor rule
+├── .cursor/mcp.json             # Cursor MCP config (${workspaceFolder})
+├── .opencode/skills/bir/SKILL.md # OpenCode skill (auto-discovered)
+├── .opencode/agents/browserir.md  # OpenCode subagent
+├── .opencode/plugins/browserir.js # OpenCode plugin (skill injection)
+├── .agents/skills/bir/SKILL.md   # Cross-platform skill
+└── opencode.json                 # Project config (no MCP — global handles)
 ```
 
 ## Tips
 
 1. **Start with `bir explain`** — always get the IR first
-2. **Use refs for clicks** — `@e5` is deterministic, CSS selectors are fragile
+2. **Use refs for clicks** — `@e5` is deterministic, CSS selectors break
 3. **Check intent** — understand what the page is for before acting
 4. **Check risks** — BrowserIR warns about destructive actions
 5. **Use memory** — store what you learn about sites
 6. **Use flow** — detect multi-step processes automatically
 7. **Use diff** — compare page versions semantically
-
-## Examples
-
-### Basic page analysis
-```bash
-bir explain https://example.com
-# Returns: sections, components, intent, metadata
-```
-
-### Interactive testing
-```bash
-bir explain http://localhost:3000/login
-bir click @e5  # Submit button
-bir explain     # Check result
-```
-
-### Compare versions
-```bash
-bir explain http://localhost:3000 > v1.json
-# ... make changes ...
-bir explain http://localhost:3000 > v2.json
-bir diff compare v1.json v2.json
-```
-
-### Flow validation
-```bash
-bir flow detect http://localhost:3000/checkout
-# Returns: flow steps with order, required, estimatedDuration
-```
-
-### Memory
-```bash
-bir memory store '{"domain":"myapp.com","purpose":"SaaS dashboard","commonFlows":["login","dashboard","settings"]}'
-bir memory recall myapp.com
-# Returns: stored knowledge
-```
