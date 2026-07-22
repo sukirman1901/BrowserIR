@@ -151,31 +151,34 @@ async function getExaSearch(): Promise<ExaSearch> {
 // ── Core Navigation & Analysis Tools ──
 
 export const explainTool = {
-  name: 'bir_explain',
+  name: 'explain',
   description:
     'Analyze a web page and return its semantic structure — intent, components, actions, flow, and risks. No CSS selectors needed.',
   inputSchema: {
     url: z.string().url().describe('The URL to analyze'),
   },
   handler: async ({ url }: { url: string }): Promise<BrowserIR> => {
-    return await explainImpl(url)
+    await ensureSession()
+    await rpc('navigate', { url })
+    return await rpc('explain', {}) as BrowserIR
   },
 }
 
 export const clickTool = {
-  name: 'bir_click',
+  name: 'click',
   description:
     'Click a component by its semantic ref (e.g., "@e3"). No CSS selectors needed.',
   inputSchema: {
     ref: z.string().describe('Component ref from browser explain (e.g., "@e3")'),
   },
   handler: async ({ ref }: { ref: string }) => {
-    await rpc('click', { ref })
+    const result = await rpc('click', { ref })
+    return { status: 'clicked', ref, ...(result as object) }
   },
 }
 
 export const graphTool = {
-  name: 'bir_graph',
+  name: 'graph',
   description:
     'Get the page structure as a tree graph showing sections, components, and their relationships.',
   inputSchema: {
@@ -188,7 +191,7 @@ export const graphTool = {
 }
 
 export const screenshotTool = {
-  name: 'bir_screenshot',
+  name: 'screenshot',
   description: 'Take a screenshot of the current page.',
   inputSchema: {},
   handler: async () => {
@@ -197,18 +200,19 @@ export const screenshotTool = {
 }
 
 export const navigateTool = {
-  name: 'bir_navigate',
+  name: 'navigate',
   description: 'Navigate to a URL in the browser.',
   inputSchema: {
     url: z.string().url().describe('URL to navigate to'),
   },
   handler: async ({ url }: { url: string }) => {
     await rpc('navigate', { url })
+    return { status: 'navigated', url }
   },
 }
 
 export const tabsTool = {
-  name: 'bir_tabs',
+  name: 'tabs',
   description: 'List all open browser tabs.',
   inputSchema: {},
   handler: async () => {
@@ -217,16 +221,20 @@ export const tabsTool = {
 }
 
 export const statusTool = {
-  name: 'bir_status',
+  name: 'status',
   description: 'Check daemon status.',
   inputSchema: {},
   handler: async () => {
-    return rpc('status')
+    try {
+      const resp = await fetch('http://localhost:3081/status')
+      if (resp.ok) return await resp.json()
+    } catch {}
+    return { running: false, error: 'Daemon not running' }
   },
 }
 
 export const analyzeTool = {
-  name: 'bir_analyze',
+  name: 'analyze',
   description: 'Create a BrowserSession for analysis and interaction',
   inputSchema: {
     url: z.string().url().describe('URL to analyze'),
@@ -239,7 +247,7 @@ export const analyzeTool = {
 // ── Semantic Analysis ──
 
 export const flowDetectTool = {
-  name: 'bir_flow_detect',
+  name: 'flow_detect',
   description: 'Detect multi-step flows from captured events for a session.',
   inputSchema: {
     sessionId: z.string().describe('Session ID to analyze'),
@@ -250,7 +258,7 @@ export const flowDetectTool = {
 }
 
 export const flowListTool = {
-  name: 'bir_flow_list',
+  name: 'flow_list',
   description: 'List known flows for a domain.',
   inputSchema: {
     domain: z.string().describe('Domain name'),
@@ -261,7 +269,7 @@ export const flowListTool = {
 }
 
 export const diffCompareTool = {
-  name: 'bir_diff_compare',
+  name: 'diff_compare',
   description: 'Compare two BrowserIR snapshots semantically.',
   inputSchema: {
     irBefore: z.any().describe('Before snapshot BrowserIR object'),
@@ -275,7 +283,7 @@ export const diffCompareTool = {
 // ── Memory System ──
 
 export const memoryRecallTool = {
-  name: 'bir_memory_recall',
+  name: 'memory_recall',
   description: 'Recall learned knowledge about a domain.',
   inputSchema: {
     domain: z.string().describe('Domain name to recall'),
@@ -286,7 +294,7 @@ export const memoryRecallTool = {
 }
 
 export const memoryStoreTool = {
-  name: 'bir_memory_store',
+  name: 'memory_store',
   description: 'Store BrowserIR knowledge about a domain.',
   inputSchema: {
     domain: z.string().describe('Domain name'),
@@ -300,7 +308,7 @@ export const memoryStoreTool = {
 // ── Knowledge Graph ──
 
 export const knowledgeAddNodeTool = {
-  name: 'bir_knowledge_add_node',
+  name: 'knowledge_add_node',
   description: 'Add node to knowledge graph.',
   inputSchema: {
     type: z.string().describe('Node type'),
@@ -313,7 +321,7 @@ export const knowledgeAddNodeTool = {
 }
 
 export const knowledgeAddEdgeTool = {
-  name: 'bir_knowledge_add_edge',
+  name: 'knowledge_add_edge',
   description: 'Add edge between knowledge nodes.',
   inputSchema: {
     source: z.string().describe('Source node ID'),
@@ -327,7 +335,7 @@ export const knowledgeAddEdgeTool = {
 }
 
 export const knowledgeSearchTool = {
-  name: 'bir_knowledge_search',
+  name: 'knowledge_search',
   description: 'Search knowledge graph by label or type.',
   inputSchema: {
     query: z.string().describe('Search query'),
@@ -339,7 +347,7 @@ export const knowledgeSearchTool = {
 }
 
 export const knowledgeTraverseTool = {
-  name: 'bir_knowledge_traverse',
+  name: 'knowledge_traverse',
   description: 'Traverse graph from starting node.',
   inputSchema: {
     startId: z.string().describe('Starting node ID'),
@@ -353,7 +361,7 @@ export const knowledgeTraverseTool = {
 // ── Event System ──
 
 export const eventsCaptureTool = {
-  name: 'bir_events_capture',
+  name: 'events_capture',
   description: 'Capture custom event into event stream.',
   inputSchema: {
     type: z.string().describe('Event type'),
@@ -366,7 +374,7 @@ export const eventsCaptureTool = {
 }
 
 export const eventsGetTool = {
-  name: 'bir_events_get',
+  name: 'events_get',
   description: 'Query captured events for a session.',
   inputSchema: {
     sessionId: z.string().describe('Session ID'),
@@ -380,7 +388,7 @@ export const eventsGetTool = {
 // ── Planner Engine ──
 
 export const plannerCreateTool = {
-  name: 'bir_planner_create',
+  name: 'planner_create',
   description: 'Create execution plan for a goal.',
   inputSchema: {
     goal: z.string().describe('Goal description'),
@@ -392,7 +400,7 @@ export const plannerCreateTool = {
 }
 
 export const plannerExecuteTool = {
-  name: 'bir_planner_execute',
+  name: 'planner_execute',
   description: 'Execute a plan by ID.',
   inputSchema: {
     planId: z.string().describe('Plan ID to execute'),
@@ -403,7 +411,7 @@ export const plannerExecuteTool = {
 }
 
 export const plannerStatusTool = {
-  name: 'bir_planner_status',
+  name: 'planner_status',
   description: 'Get status of a plan.',
   inputSchema: {
     planId: z.string().describe('Plan ID'),
@@ -416,7 +424,7 @@ export const plannerStatusTool = {
 // ── Self-Healing ──
 
 export const healFindTool = {
-  name: 'bir_heal_find',
+  name: 'heal_find',
   description: 'Find replacement for broken selector using semantic IR.',
   inputSchema: {
     brokenSelector: z.string().describe('Broken selector string'),
@@ -431,7 +439,7 @@ export const healFindTool = {
 // ── Multi-Browser ──
 
 export const multiCreateSessionTool = {
-  name: 'bir_multi_create_session',
+  name: 'multi_create_session',
   description: 'Create new multi-browser session.',
   inputSchema: {},
   handler: async () => {
@@ -440,7 +448,7 @@ export const multiCreateSessionTool = {
 }
 
 export const multiExecuteTool = {
-  name: 'bir_multi_execute',
+  name: 'multi_execute',
   description: 'Execute task across multiple tabs.',
   inputSchema: {
     task: z.any().describe('Multi-browser task specification'),
@@ -451,7 +459,7 @@ export const multiExecuteTool = {
 }
 
 export const multiSessionsTool = {
-  name: 'bir_multi_sessions',
+  name: 'multi_sessions',
   description: 'List all multi-browser sessions.',
   inputSchema: {},
   handler: async () => {
@@ -462,7 +470,7 @@ export const multiSessionsTool = {
 // ── Agent Coordination ──
 
 export const agentRegisterTool = {
-  name: 'bir_agent_register',
+  name: 'agent_register',
   description: 'Register agent for coordination.',
   inputSchema: {
     id: z.string().describe('Agent ID'),
@@ -477,7 +485,7 @@ export const agentRegisterTool = {
 }
 
 export const agentUnregisterTool = {
-  name: 'bir_agent_unregister',
+  name: 'agent_unregister',
   description: 'Unregister agent.',
   inputSchema: {
     id: z.string().describe('Agent ID to unregister'),
@@ -488,7 +496,7 @@ export const agentUnregisterTool = {
 }
 
 export const agentClaimTool = {
-  name: 'bir_agent_claim',
+  name: 'agent_claim',
   description: 'Claim work on specific action.',
   inputSchema: {
     agentId: z.string().describe('Agent ID'),
@@ -502,7 +510,7 @@ export const agentClaimTool = {
 }
 
 export const agentGraphTool = {
-  name: 'bir_agent_graph',
+  name: 'agent_graph',
   description: 'Show agent dependency graph.',
   inputSchema: {},
   handler: async () => {
@@ -513,7 +521,7 @@ export const agentGraphTool = {
 // ── Semantic Web Tools ──
 
 export const semanticWebFetchTool = {
-  name: 'bir_webfetch',
+  name: 'webfetch',
   description: 'Fetch URL with semantic understanding — returns structured data with intent, components, and risks instead of raw HTML.',
   inputSchema: {
     url: z.string().url().describe('The URL to fetch'),
@@ -600,7 +608,7 @@ export const semanticWebFetchTool = {
 }
 
 export const semanticWebSearchTool = {
-  name: 'bir_websearch',
+  name: 'websearch',
   description: 'Search the web with semantic understanding — returns structured results with intent and relevance scoring.',
   inputSchema: {
     query: z.string().describe('Search query'),
@@ -661,7 +669,7 @@ export const semanticWebSearchTool = {
 }
 
 export const birAnalyzeContentTool = {
-  name: 'bir_analyze_content',
+  name: 'analyze_content',
   description: 'Analyze text content and return semantic understanding — intent, topics, sentiment, key entities.',
   inputSchema: {
     content: z.string().describe('Text content to analyze'),
@@ -717,7 +725,7 @@ export const birAnalyzeContentTool = {
 // ── Search & Crawl Tools ──
 
 export const searchTool = {
-  name: 'bir_search',
+  name: 'search',
   description: 'Search and browse the web with semantic understanding. Auto-crawls and indexes pages if needed. Use for finding documentation, pricing, APIs, tutorials, or any web content.',
   inputSchema: {
     query: z.string().describe('What to search for (natural language, e.g., "Next.js documentation", "Stripe pricing", "how to login")'),
@@ -736,13 +744,13 @@ export const searchTool = {
     return { 
       query,
       results,
-      hint: results.length === 0 ? 'No results found. Try crawling specific URLs with bir_crawl.' : undefined
+      hint: results.length === 0 ? 'No results found. Try crawling specific URLs with crawl.' : undefined
     }
   },
 }
 
 export const crawlTool = {
-  name: 'bir_crawl',
+  name: 'crawl',
   description: 'Crawl a URL and add it to search index',
   inputSchema: {
     url: z.string().describe('URL to crawl'),
@@ -756,7 +764,7 @@ export const crawlTool = {
 }
 
 export const searchStatsTool = {
-  name: 'bir_search_stats',
+  name: 'search_stats',
   description: 'Get search index statistics',
   inputSchema: {},
   handler: async () => {

@@ -7,14 +7,14 @@ description: Semantic browser understanding for AI agents - search, analyze, cra
 
 ## IMPORTANT: Use BrowserIR for ALL Web Content
 
-**ALWAYS use `bir_webfetch` instead of default webfetch.** BrowserIR provides semantic understanding that makes AI smarter.
+**ALWAYS use `webfetch` instead of default webfetch.** BrowserIR provides semantic understanding that makes AI smarter.
 
 ```
 # WRONG - use default webfetch
 webfetch("https://example.com")
 
 # CORRECT - use BrowserIR
-bir_webfetch({ url: "https://example.com" })
+webfetch({ url: "https://example.com" })
 ```
 
 **Why?** BrowserIR returns:
@@ -43,7 +43,7 @@ Use this skill when the user wants to:
 
 ## Automatic Behaviors
 
-**Search auto-crawls**: When user asks to search something, `bir_search` automatically crawls relevant documentation sites if the index is empty. No manual crawling needed.
+**Search auto-crawls**: When user asks to search something, `search` automatically crawls relevant documentation sites if the index is empty. No manual crawling needed.
 
 **Examples of natural queries:**
 - "search Next.js documentation" → auto-crawls nextjs.org/docs
@@ -91,7 +91,7 @@ BrowserIR compiles web pages into **semantic intermediate representations (IR)**
 ## Interfaces (MCP Tools vs CLI Commands)
 
 BrowserIR provides two distinct interfaces depending on how you interact:
-- **MCP Tools** (for AI Assistants / LLMs): Functions prefixed with `bir_` (e.g. `bir_explain`, `bir_click`).
+- **MCP Tools** (for AI Assistants / LLMs): Provided by the `bir` MCP server (e.g. `explain`, `click`).
 - **CLI Commands** (for Terminal / Shell): Command-line subcommands (e.g. `bir explain <url>`, `bir click @e3`).
 
 ---
@@ -101,82 +101,82 @@ BrowserIR provides two distinct interfaces depending on how you interact:
 ### Core Navigation & Analysis
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_navigate` | Navigate to URL in browser | `{ url: string }` |
-| `bir_explain` | Analyze page and return semantic BrowserIR | `{ url: string }` |
-| `bir_analyze` | Create a BrowserSession for analysis and interaction | `{ url: string }` |
-| `bir_click` | Click element by ref (`@e1`, `@e2`, ...) with self-healing | `{ ref: string }` |
-| `bir_screenshot` | Take screenshot of current page | `{}` |
-| `bir_graph` | Get page structure as tree graph | `{ url: string }` |
-| `bir_tabs` | List all open browser tabs | `{}` |
-| `bir_status` | Check daemon status | `{}` |
+| `navigate` | Navigate to URL in browser | `{ url: string }` |
+| `explain` | Analyze page and return semantic BrowserIR | `{ url: string }` |
+| `analyze` | Create a BrowserSession for analysis and interaction | `{ url: string }` |
+| `click` | Click element by ref (`@e1`, `@e2`, ...) with self-healing | `{ ref: string }` |
+| `screenshot` | Take screenshot of current page | `{}` |
+| `graph` | Get page structure as tree graph | `{ url: string }` |
+| `tabs` | List all open browser tabs | `{}` |
+| `status` | Check daemon status | `{}` |
 
 ### Web Fetch & Search
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_webfetch` | Fetch URL with semantic understanding (HTML→Markdown) | `{ url: string, format?: string }` |
-| `bir_websearch` | Search web with semantic results | `{ query: string, numResults?: number }` |
-| `bir_analyze_content` | Analyze text content and return semantic understanding | `{ content: string, type?: string }` |
+| `webfetch` | Fetch URL with semantic understanding (HTML→Markdown) | `{ url: string, format?: string }` |
+| `websearch` | Search web with semantic results | `{ query: string, numResults?: number }` |
+| `analyze_content` | Analyze text content and return semantic understanding | `{ content: string, type?: string }` |
 
 ### Semantic Search Engine
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_search` | Semantic search returning BrowserIR. Auto-crawls if index empty. | `{ query: string, domain?: string, intent?: string, limit?: number }` |
-| `bir_crawl` | Crawl URL and add to search index | `{ url: string, depth?: number }` |
-| `bir_search_stats` | Get search index statistics | `{}` |
+| `search` | Semantic search returning BrowserIR. Auto-crawls if index empty. | `{ query: string, domain?: string, intent?: string, limit?: number }` |
+| `crawl` | Crawl URL and add to search index | `{ url: string, depth?: number }` |
+| `search_stats` | Get search index statistics | `{}` |
 
 ### Semantic Analysis
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_flow_detect` | Detect multi-step flows from captured events | `{ sessionId: string }` |
-| `bir_flow_list` | List known flows for a domain | `{ domain: string }` |
-| `bir_diff_compare` | Compare two BrowserIR snapshots semantically | `{ irBefore: object, irAfter: object }` |
+| `flow_detect` | Detect multi-step flows from captured events | `{ sessionId: string }` |
+| `flow_list` | List known flows for a domain | `{ domain: string }` |
+| `diff_compare` | Compare two BrowserIR snapshots semantically | `{ irBefore: object, irAfter: object }` |
 
 ### Memory System
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_memory_recall` | Recall learned knowledge about a domain | `{ domain: string }` |
-| `bir_memory_store` | Store BrowserIR knowledge about a domain | `{ domain: string, ir: object }` |
+| `memory_recall` | Recall learned knowledge about a domain | `{ domain: string }` |
+| `memory_store` | Store BrowserIR knowledge about a domain | `{ domain: string, ir: object }` |
 
 ### Knowledge Graph
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_knowledge_add_node` | Add node to knowledge graph | `{ type: string, label: string, properties?: object }` |
-| `bir_knowledge_add_edge` | Add edge between knowledge nodes | `{ source: string, target: string, type: string, weight?: number }` |
-| `bir_knowledge_search` | Search knowledge graph by label or type | `{ query: string, type?: string }` |
-| `bir_knowledge_traverse` | Traverse graph from starting node | `{ startId: string, maxDepth?: number }` |
+| `knowledge_add_node` | Add node to knowledge graph | `{ type: string, label: string, properties?: object }` |
+| `knowledge_add_edge` | Add edge between knowledge nodes | `{ source: string, target: string, type: string, weight?: number }` |
+| `knowledge_search` | Search knowledge graph by label or type | `{ query: string, type?: string }` |
+| `knowledge_traverse` | Traverse graph from starting node | `{ startId: string, maxDepth?: number }` |
 
 ### Event System
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_events_capture` | Capture custom event into event stream | `{ type: string, sessionId: string, data?: object }` |
-| `bir_events_get` | Query captured events for a session | `{ sessionId: string, query?: object }` |
+| `events_capture` | Capture custom event into event stream | `{ type: string, sessionId: string, data?: object }` |
+| `events_get` | Query captured events for a session | `{ sessionId: string, query?: object }` |
 
 ### Planner Engine
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_planner_create` | Create execution plan for a goal | `{ goal: string, domain: string }` |
-| `bir_planner_execute` | Execute a plan by ID | `{ planId: string }` |
-| `bir_planner_status` | Get status of a plan | `{ planId: string }` |
+| `planner_create` | Create execution plan for a goal | `{ goal: string, domain: string }` |
+| `planner_execute` | Execute a plan by ID | `{ planId: string }` |
+| `planner_status` | Get status of a plan | `{ planId: string }` |
 
 ### Self-Healing
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_heal_find` | Find replacement for broken selector using semantic IR | `{ brokenSelector: string, ir: object, intent?: string }` |
+| `heal_find` | Find replacement for broken selector using semantic IR | `{ brokenSelector: string, ir: object, intent?: string }` |
 
 ### Multi-Browser
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_multi_create_session` | Create new multi-browser session | `{}` |
-| `bir_multi_execute` | Execute task across multiple tabs | `{ task: object }` |
-| `bir_multi_sessions` | List all multi-browser sessions | `{}` |
+| `multi_create_session` | Create new multi-browser session | `{}` |
+| `multi_execute` | Execute task across multiple tabs | `{ task: object }` |
+| `multi_sessions` | List all multi-browser sessions | `{}` |
 
 ### Agent Coordination
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
-| `bir_agent_register` | Register agent for coordination | `{ id: string, name: string, role: string, sessionId: string, status?: string }` |
-| `bir_agent_unregister` | Unregister agent | `{ id: string }` |
-| `bir_agent_claim` | Claim work on specific action | `{ agentId: string, type: string, target?: string, value?: string }` |
-| `bir_agent_graph` | Show agent dependency graph | `{}` |
+| `agent_register` | Register agent for coordination | `{ id: string, name: string, role: string, sessionId: string, status?: string }` |
+| `agent_unregister` | Unregister agent | `{ id: string }` |
+| `agent_claim` | Claim work on specific action | `{ agentId: string, type: string, target?: string, value?: string }` |
+| `agent_graph` | Show agent dependency graph | `{}` |
 
 ---
 
@@ -220,7 +220,7 @@ npm start
   ```
 - **MCP Tool**:
   ```json
-  bir_explain({ "url": "https://example.com" })
+  explain({ "url": "https://example.com" })
   ```
 
 This returns BrowserIR containing:
@@ -236,12 +236,12 @@ This returns BrowserIR containing:
   ```
 - **MCP Tool**:
   ```json
-  bir_click({ "ref": "@e5" })
+  click({ "ref": "@e5" })
   ```
 
 ### Step 4: Self-Healing Broken Selectors (MCP Tool)
 ```json
-bir_heal_find({
+heal_find({
   "brokenSelector": "button.submit",
   "intent": "submit form",
   "ir": currentBrowserIRObject
@@ -250,32 +250,32 @@ bir_heal_find({
 
 ### Step 5: Multi-Browser Testing (MCP Tools)
 ```json
-bir_multi_create_session()
-bir_multi_execute({ "task": { "tabs": [{ "url": "https://example.com" }] } })
-bir_multi_sessions()
+multi_create_session()
+multi_execute({ "task": { "tabs": [{ "url": "https://example.com" }] } })
+multi_sessions()
 ```
 
 ### Step 6: Agent Coordination (MCP Tools)
 ```json
-bir_agent_register({ "id": "agent-1", "name": "tester", "role": "primary", "sessionId": "session-123" })
-bir_agent_claim({ "agentId": "agent-1", "type": "click", "target": "@e5" })
-bir_agent_graph()
+agent_register({ "id": "agent-1", "name": "tester", "role": "primary", "sessionId": "session-123" })
+agent_claim({ "agentId": "agent-1", "type": "click", "target": "@e5" })
+agent_graph()
 ```
 
 ---
 
 ## Tips & Best Practices
 
-1. **Always start with `bir_explain`** — Get IR before acting.
+1. **Always start with `explain`** — Get IR before acting.
 2. **Use refs (`@e5`), not CSS selectors** — Refs are deterministic and survive UI changes.
 3. **Check intent & risk** — Understand risks before executing sensitive actions (delete/checkout).
 4. **Use memory & flow** — Leverage memory system to recognize recurring web patterns.
-5. **Use `bir_webfetch` instead of raw fetch** — Returns semantic data with intent and components.
+5. **Use `webfetch` instead of raw fetch** — Returns semantic data with intent and components.
 
 ---
 
 ## Troubleshooting
 
 - **Daemon not running**: Run `node dist/daemon/server.js` or `npm start`.
-- **Ref not found**: Re-run `bir_explain` to refresh component refs.
-- **Broken selector**: Use `bir_heal_find` to find replacement matching intent.
+- **Ref not found**: Re-run `explain` to refresh component refs.
+- **Broken selector**: Use `heal_find` to find replacement matching intent.

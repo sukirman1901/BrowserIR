@@ -151,7 +151,7 @@ Raw HTML → BrowserIR → Semantic Tree (sections, components, intent, flow, ri
 1. You ask something like *"analyze https://example.com"*
 2. The AI detects the intent → matches the **bir** skill
 3. The skill provides a methodology (step-by-step guide)
-4. The AI calls MCP tools like `bir_explain`, `bir_click`, `bir_search`
+4. The AI calls MCP tools like `explain`, `click`, `search`
 5. Results are analyzed and presented
 
 The AI follows a semantic understanding methodology: **Explain → Analyze → Interact → Test → Learn**
@@ -186,92 +186,92 @@ Expected: 36 tools listed.
 
 | Tool | Description | Input |
 |------|-------------|-------|
-| `bir_explain` | Analyze page and return semantic BrowserIR | `{ url }` |
-| `bir_analyze` | Create a BrowserSession for analysis and interaction | `{ url }` |
-| `bir_click` | Click element by ref (@e1, @e2, ...) with self-healing | `{ ref }` |
-| `bir_navigate` | Navigate to URL in browser | `{ url }` |
-| `bir_screenshot` | Take screenshot of current page | `{}` |
-| `bir_graph` | Get page structure as tree graph | `{ url }` |
-| `bir_tabs` | List all open browser tabs | `{}` |
-| `bir_status` | Check daemon status | `{}` |
+| `explain` | Analyze page and return semantic BrowserIR | `{ url }` |
+| `analyze` | Create a BrowserSession for analysis and interaction | `{ url }` |
+| `click` | Click element by ref (@e1, @e2, ...) with self-healing | `{ ref }` |
+| `navigate` | Navigate to URL in browser | `{ url }` |
+| `screenshot` | Take screenshot of current page | `{}` |
+| `graph` | Get page structure as tree graph | `{ url }` |
+| `tabs` | List all open browser tabs | `{}` |
+| `status` | Check daemon status | `{}` |
 
 ### Web Fetch & Search (3)
 
 | Tool | Description | Input |
 |------|-------------|-------|
-| `bir_webfetch` | Fetch URL with semantic understanding (HTML→Markdown) | `{ url, format? }` |
-| `bir_websearch` | Search web with semantic results | `{ query, numResults? }` |
-| `bir_analyze_content` | Analyze text content and return semantic understanding | `{ content, type? }` |
+| `webfetch` | Fetch URL with semantic understanding (HTML→Markdown) | `{ url, format? }` |
+| `websearch` | Search web with semantic results | `{ query, numResults? }` |
+| `analyze_content` | Analyze text content and return semantic understanding | `{ content, type? }` |
 
 ### Semantic Search Engine (3)
 
 | Tool | Description | Input |
 |------|-------------|-------|
-| `bir_search` | Semantic search returning BrowserIR. Auto-crawls if index empty. | `{ query, domain?, intent?, limit? }` |
-| `bir_crawl` | Crawl URL and add to search index | `{ url, depth? }` |
-| `bir_search_stats` | Get search index statistics | `{}` |
+| `search` | Semantic search returning BrowserIR. Auto-crawls if index empty. | `{ query, domain?, intent?, limit? }` |
+| `crawl` | Crawl URL and add to search index | `{ url, depth? }` |
+| `search_stats` | Get search index statistics | `{}` |
 
 ### Semantic Analysis (3)
 
 | Tool | Description | Input |
 |------|-------------|-------|
-| `bir_flow_detect` | Detect multi-step flows from captured events | `{ sessionId }` |
-| `bir_flow_list` | List known flows for a domain | `{ domain }` |
-| `bir_diff_compare` | Compare two BrowserIR snapshots semantically | `{ irBefore, irAfter }` |
+| `flow_detect` | Detect multi-step flows from captured events | `{ sessionId }` |
+| `flow_list` | List known flows for a domain | `{ domain }` |
+| `diff_compare` | Compare two BrowserIR snapshots semantically | `{ irBefore, irAfter }` |
 
 ### Memory System (2)
 
 | Tool | Description | Input |
 |------|-------------|-------|
-| `bir_memory_recall` | Recall learned knowledge about a domain | `{ domain }` |
-| `bir_memory_store` | Store BrowserIR knowledge about a domain | `{ domain, ir }` |
+| `memory_recall` | Recall learned knowledge about a domain | `{ domain }` |
+| `memory_store` | Store BrowserIR knowledge about a domain | `{ domain, ir }` |
 
 ### Knowledge Graph (4)
 
 | Tool | Description | Input |
 |------|-------------|-------|
-| `bir_knowledge_add_node` | Add node to knowledge graph | `{ type, label, properties? }` |
-| `bir_knowledge_add_edge` | Add edge between knowledge nodes | `{ source, target, type, weight? }` |
-| `bir_knowledge_search` | Search knowledge graph by label or type | `{ query, type? }` |
-| `bir_knowledge_traverse` | Traverse graph from starting node | `{ startId, maxDepth? }` |
+| `knowledge_add_node` | Add node to knowledge graph | `{ type, label, properties? }` |
+| `knowledge_add_edge` | Add edge between knowledge nodes | `{ source, target, type, weight? }` |
+| `knowledge_search` | Search knowledge graph by label or type | `{ query, type? }` |
+| `knowledge_traverse` | Traverse graph from starting node | `{ startId, maxDepth? }` |
 
 ### Event System (2)
 
 | Tool | Description | Input |
 |------|-------------|-------|
-| `bir_events_capture` | Capture custom event into event stream | `{ type, sessionId, data? }` |
-| `bir_events_get` | Query captured events for a session | `{ sessionId, query? }` |
+| `events_capture` | Capture custom event into event stream | `{ type, sessionId, data? }` |
+| `events_get` | Query captured events for a session | `{ sessionId, query? }` |
 
 ### Planner Engine (3)
 
 | Tool | Description | Input |
 |------|-------------|-------|
-| `bir_planner_create` | Create execution plan for a goal | `{ goal, domain }` |
-| `bir_planner_execute` | Execute a plan by ID | `{ planId }` |
-| `bir_planner_status` | Get status of a plan | `{ planId }` |
+| `planner_create` | Create execution plan for a goal | `{ goal, domain }` |
+| `planner_execute` | Execute a plan by ID | `{ planId }` |
+| `planner_status` | Get status of a plan | `{ planId }` |
 
 ### Self-Healing (1)
 
 | Tool | Description | Input |
 |------|-------------|-------|
-| `bir_heal_find` | Find replacement for broken selector using semantic IR | `{ brokenSelector, ir, intent? }` |
+| `heal_find` | Find replacement for broken selector using semantic IR | `{ brokenSelector, ir, intent? }` |
 
 ### Multi-Browser (3)
 
 | Tool | Description | Input |
 |------|-------------|-------|
-| `bir_multi_create_session` | Create new multi-browser session | `{}` |
-| `bir_multi_execute` | Execute task across multiple tabs | `{ task }` |
-| `bir_multi_sessions` | List all multi-browser sessions | `{}` |
+| `multi_create_session` | Create new multi-browser session | `{}` |
+| `multi_execute` | Execute task across multiple tabs | `{ task }` |
+| `multi_sessions` | List all multi-browser sessions | `{}` |
 
 ### Agent Coordination (4)
 
 | Tool | Description | Input |
 |------|-------------|-------|
-| `bir_agent_register` | Register agent for coordination | `{ id, name, role, sessionId, status? }` |
-| `bir_agent_unregister` | Unregister agent | `{ id }` |
-| `bir_agent_claim` | Claim work on specific action | `{ agentId, type, target?, value? }` |
-| `bir_agent_graph` | Show agent dependency graph | `{}` |
+| `agent_register` | Register agent for coordination | `{ id, name, role, sessionId, status? }` |
+| `agent_unregister` | Unregister agent | `{ id }` |
+| `agent_claim` | Claim work on specific action | `{ agentId, type, target?, value? }` |
+| `agent_graph` | Show agent dependency graph | `{}` |
 
 ---
 

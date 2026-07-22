@@ -60,7 +60,7 @@ Raw HTML → BrowserIR → Semantic Tree (sections, components, intent, flow, ri
 
 ### MCP Server (src/adapters/mcp/)
 
-- **MCP server name**: `browserir`
+- **MCP server name**: `bir`
 - **36 tools** via stdio transport
 - Auto-starts daemon if not running
 - Registered in `index.ts:109-165`
@@ -109,62 +109,62 @@ bir search stats               # Index statistics
 ### MCP Tools (36 tools)
 
  #### Core Navigation & Analysis
-- `bir_explain` — Analyze page and return semantic BrowserIR
-- `bir_analyze` — Create a BrowserSession for analysis
-- `bir_click` — Click element by ref (@e1, @e2, ...) with self-healing
-- `bir_navigate` — Navigate to URL in browser
-- `bir_screenshot` — Take screenshot of current page
-- `bir_graph` — Get page structure as tree graph
-- `bir_tabs` — List all open browser tabs
-- `bir_status` — Check daemon status
+- `explain` — Analyze page and return semantic BrowserIR
+- `analyze` — Create a BrowserSession for analysis
+- `click` — Click element by ref (@e1, @e2, ...) with self-healing
+- `navigate` — Navigate to URL in browser
+- `screenshot` — Take screenshot of current page
+- `graph` — Get page structure as tree graph
+- `tabs` — List all open browser tabs
+- `status` — Check daemon status
 
 #### Web Fetch & Search
-- `bir_webfetch` — Fetch URL with semantic understanding (HTML→Markdown)
-- `bir_websearch` — Search web with semantic results
-- `bir_analyze_content` — Analyze text content and return semantic understanding
+- `webfetch` — Fetch URL with semantic understanding (HTML→Markdown)
+- `websearch` — Search web with semantic results
+- `analyze_content` — Analyze text content and return semantic understanding
 
 #### Semantic Search Engine
-- `bir_search` — Semantic search returning BrowserIR. Auto-crawls if needed.
-- `bir_crawl` — Crawl URL and add to search index
-- `bir_search_stats` — Get search index statistics
+- `search` — Semantic search returning BrowserIR. Auto-crawls if needed.
+- `crawl` — Crawl URL and add to search index
+- `search_stats` — Get search index statistics
 
 #### Semantic Analysis
-- `bir_flow_detect` — Detect multi-step flows from captured events
-- `bir_flow_list` — List known flows for a domain
-- `bir_diff_compare` — Compare two BrowserIR snapshots semantically
+- `flow_detect` — Detect multi-step flows from captured events
+- `flow_list` — List known flows for a domain
+- `diff_compare` — Compare two BrowserIR snapshots semantically
 
 #### Memory System
-- `bir_memory_recall` — Recall learned knowledge about a domain
-- `bir_memory_store` — Store BrowserIR knowledge about a domain
+- `memory_recall` — Recall learned knowledge about a domain
+- `memory_store` — Store BrowserIR knowledge about a domain
 
 #### Knowledge Graph
-- `bir_knowledge_add_node` — Add node to knowledge graph
-- `bir_knowledge_add_edge` — Add edge between knowledge nodes
-- `bir_knowledge_search` — Search knowledge graph by label or type
-- `bir_knowledge_traverse` — Traverse graph from starting node
+- `knowledge_add_node` — Add node to knowledge graph
+- `knowledge_add_edge` — Add edge between knowledge nodes
+- `knowledge_search` — Search knowledge graph by label or type
+- `knowledge_traverse` — Traverse graph from starting node
 
 #### Event System
-- `bir_events_capture` — Capture custom event into event stream
-- `bir_events_get` — Query captured events for a session
+- `events_capture` — Capture custom event into event stream
+- `events_get` — Query captured events for a session
 
 #### Planner Engine
-- `bir_planner_create` — Create execution plan for a goal
-- `bir_planner_execute` — Execute a plan by ID
-- `bir_planner_status` — Get status of a plan
+- `planner_create` — Create execution plan for a goal
+- `planner_execute` — Execute a plan by ID
+- `planner_status` — Get status of a plan
 
 #### Self-Healing
-- `bir_heal_find` — Find replacement for broken selector using semantic IR
+- `heal_find` — Find replacement for broken selector using semantic IR
 
 #### Multi-Browser
-- `bir_multi_create_session` — Create new multi-browser session
-- `bir_multi_execute` — Execute task across multiple tabs
-- `bir_multi_sessions` — List all multi-browser sessions
+- `multi_create_session` — Create new multi-browser session
+- `multi_execute` — Execute task across multiple tabs
+- `multi_sessions` — List all multi-browser sessions
 
 #### Agent Coordination
-- `bir_agent_register` — Register agent for coordination
-- `bir_agent_unregister` — Unregister agent
-- `bir_agent_claim` — Claim work on specific action
-- `bir_agent_graph` — Show agent dependency graph
+- `agent_register` — Register agent for coordination
+- `agent_unregister` — Unregister agent
+- `agent_claim` — Claim work on specific action
+- `agent_graph` — Show agent dependency graph
 
 ## Core Concepts
 
@@ -225,7 +225,7 @@ BrowserIR/
 
 ## Tips
 
-1. **Start with `bir explain`** — always get the IR first
+1. **Start with `explain`** — always get the IR first
 2. **Use refs for clicks** — `@e5` is deterministic, CSS selectors break
 3. **Check intent** — understand what the page is for before acting
 4. **Check risks** — BrowserIR warns about destructive actions

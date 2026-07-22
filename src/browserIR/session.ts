@@ -2,11 +2,53 @@
 // Easy-to-use object-oriented API
 
 import { RPCClient } from '../daemon/transport.js'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+import * as path from 'path'
+import * as fs from 'fs'
+import { spawn } from 'child_process'
 import type { BrowserIR, DiffResult } from '../ir/types.js'
+
+const execAsync = promisify(exec)
 
 let sharedClient: RPCClient | null = null
 
+async function isDaemonRunning(): Promise<boolean> {
+  try {
+    const result = await execAsync('curl -s http://localhost:3081/health')
+    return result.stdout.includes('"status":"healthy"')
+  } catch {
+    return false
+  }
+}
+
+async function ensureDaemon(): Promise<void> {
+  const running = await isDaemonRunning()
+  if (running) return
+
+  let serverPath = path.join(process.cwd(), 'dist', 'daemon', 'server.js')
+  if (!fs.existsSync(serverPath)) {
+    serverPath = path.resolve(__dirname, '../../daemon/server.js')
+  }
+  if (!fs.existsSync(serverPath)) return
+
+  const daemon = spawn('node', [serverPath], { detached: true, stdio: ['ignore', 'pipe', 'pipe'] })
+  daemon.unref()
+
+  await new Promise<void>((resolve) => {
+    let started = false
+    daemon.stdout?.on('data', (data) => {
+      if (data.toString().includes('listening') && !started) {
+        started = true
+        setTimeout(resolve, 500)
+      }
+    })
+    setTimeout(() => { if (!started) { started = true; resolve() } }, 3000)
+  })
+}
+
 async function getClient(): Promise<RPCClient> {
+  await ensureDaemon()
   if (!sharedClient) {
     sharedClient = new RPCClient()
     await sharedClient.connect()
