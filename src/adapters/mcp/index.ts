@@ -16,6 +16,7 @@ import {
   agentRegisterTool, agentUnregisterTool, agentClaimTool, agentGraphTool,
   analyzeTool,
   semanticWebFetchTool, semanticWebSearchTool, birAnalyzeContentTool,
+  searchTool, crawlTool, searchStatsTool,
 } from './tools.js'
 
 async function main() {
@@ -94,9 +95,14 @@ async function main() {
   reg(semanticWebSearchTool)
   reg(birAnalyzeContentTool)
 
+  // Search & Crawl
+  reg(searchTool)
+  reg(crawlTool)
+  reg(searchStatsTool)
+
   const transport = new StdioServerTransport()
   await server.connect(transport)
-  console.error('BrowserIR MCP server running on stdio (33 tools)')
+  console.error('BrowserIR MCP server running on stdio (36 tools)')
 }
 
 main().catch((err) => {

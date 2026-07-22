@@ -2,6 +2,9 @@ import { z } from 'zod'
 import { RPCClient } from '../../daemon/transport.js'
 import type { BrowserIR } from '../../ir/types.js'
 import { explain as explainImpl, analyze as analyzeImpl, type BrowserSession } from '../../browserIR/session.js'
+import { ExaSearch } from '../../engines/exa-search.js'
+import { createDatabase } from '../../db/index.js'
+import type { IntentCategory } from '../../ir/search-types.js'
 
 let sharedClient: RPCClient | null = null
 let sessionStarted = false
@@ -31,6 +34,19 @@ async function rpc(method: string, params?: Record<string, unknown>): Promise<un
 function resetClient(): void {
   sharedClient = null
   sessionStarted = false
+}
+
+// ── ExaSearch singleton ──
+
+let exaSearchInstance: ExaSearch | null = null
+
+async function getExaSearch(): Promise<ExaSearch> {
+  if (!exaSearchInstance) {
+    const dbPath = process.env.BIR_DB_PATH || 'data/bir.db'
+    const db = await createDatabase(dbPath)
+    exaSearchInstance = new ExaSearch(db)
+  }
+  return exaSearchInstance
 }
 
 // ── Core Navigation & Analysis Tools ──
@@ -596,6 +612,49 @@ export const birAnalyzeContentTool = {
       },
       summary: content.substring(0, 200) + '...'
     }
+  },
+}
+
+// ── Search & Crawl Tools ──
+
+export const searchTool = {
+  name: 'bir_search',
+  description: 'Search web pages semantically (like Exa). Understands intent beyond keywords.',
+  inputSchema: {
+    query: z.string().describe('Natural language search query'),
+    domain: z.string().optional().describe('Filter by domain'),
+    intent: z.string().optional().describe('Filter by intent (login, pricing, docs, etc.)'),
+    limit: z.number().optional().describe('Max results (default 10)'),
+  },
+  handler: async ({ query, domain, intent, limit }: { query: string; domain?: string; intent?: string; limit?: number }) => {
+    const exaSearch = await getExaSearch()
+    const results = await exaSearch.search(query, { domain, intent: intent as IntentCategory | undefined, limit })
+    return { results }
+  },
+}
+
+export const crawlTool = {
+  name: 'bir_crawl',
+  description: 'Crawl a URL and add it to search index',
+  inputSchema: {
+    url: z.string().describe('URL to crawl'),
+    depth: z.number().optional().describe('Crawl depth (default 2)'),
+  },
+  handler: async ({ url, depth }: { url: string; depth?: number }) => {
+    const exaSearch = await getExaSearch()
+    const result = await exaSearch.crawlAndIndex(url)
+    return { crawled: !!result, result }
+  },
+}
+
+export const searchStatsTool = {
+  name: 'bir_search_stats',
+  description: 'Get search index statistics',
+  inputSchema: {},
+  handler: async () => {
+    const exaSearch = await getExaSearch()
+    const stats = await exaSearch.getStats()
+    return stats
   },
 }
 

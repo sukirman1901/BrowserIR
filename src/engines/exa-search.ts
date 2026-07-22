@@ -16,8 +16,6 @@ export class ExaSearch {
   private indexer: SemanticIndexer
   private intentClassifier: IntentClassifier
   private crawler: WebCrawler
-  private crawlQueue: Array<{ url: string; priority: number }> = []
-  private crawling = false
 
   constructor(db: Database.Database, options: ExaSearchOptions = {}) {
     this.indexer = new SemanticIndexer(db)
@@ -29,15 +27,16 @@ export class ExaSearch {
     })
   }
 
-  async search(query: string, filters: SearchFilters = {}): Promise<SearchResult[]> {
+  async search(query: string, filters: SearchFilters & { limit?: number } = {}): Promise<SearchResult[]> {
+    const { limit, ...searchFilters } = filters
     const intent = this.intentClassifier.classify(query)
 
     const mergedFilters: SearchFilters = {
-      ...filters,
-      intent: filters.intent ?? (intent.confidence > 0.5 ? intent.category : undefined)
+      ...searchFilters,
+      intent: searchFilters.intent ?? (intent.confidence > 0.5 ? intent.category : undefined)
     }
 
-    return this.indexer.search(query, mergedFilters)
+    return this.indexer.search(query, { ...mergedFilters, limit })
   }
 
   async indexPage(page: {
@@ -71,37 +70,37 @@ export class ExaSearch {
   }
 
   async crawlAndIndexBFS(startUrl: string): Promise<SearchResult[]> {
-    const crawlResults = await this.crawler.crawlBFS(startUrl)
-    const results: SearchResult[] = []
+    try {
+      const crawlResults = await this.crawler.crawlBFS(startUrl)
+      const results: SearchResult[] = []
 
-    for (const crawlResult of crawlResults) {
-      if (crawlResult.status === 'success') {
-        await this.indexer.indexPage({
-          url: crawlResult.url,
-          title: crawlResult.title,
-          content: crawlResult.content,
-          ir: crawlResult.ir
-        })
+      for (const crawlResult of crawlResults) {
+        if (crawlResult.status === 'success') {
+          await this.indexer.indexPage({
+            url: crawlResult.url,
+            title: crawlResult.title,
+            content: crawlResult.content,
+            ir: crawlResult.ir
+          })
 
-        const page = await this.indexer.getPage(crawlResult.url)
-        if (page) results.push(page)
+          const page = await this.indexer.getPage(crawlResult.url)
+          if (page) results.push(page)
+        }
       }
-    }
 
-    return results
+      return results
+    } catch (error) {
+      console.error(`Failed to crawl ${startUrl} (BFS):`, error)
+      return []
+    }
   }
 
   async getStats(): Promise<{
     totalPages: number
     totalDomains: number
     lastIndexed: number
-    queueSize: number
   }> {
-    const indexerStats = await this.indexer.getStats()
-    return {
-      ...indexerStats,
-      queueSize: this.crawlQueue.length
-    }
+    return this.indexer.getStats()
   }
 
   async getPage(url: string): Promise<SearchResult | null> {
@@ -112,7 +111,7 @@ export class ExaSearch {
     return this.indexer.deletePage(url)
   }
 
-  clearQueue(): void {
-    this.crawlQueue = []
+  async stop(): Promise<void> {
+    await this.crawler.stop()
   }
 }
