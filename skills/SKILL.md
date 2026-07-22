@@ -21,11 +21,13 @@ bir_webfetch({ url: "https://example.com" })
 ## When to Use
 
 Use this skill when the user wants to:
+- **Search** for documentation, APIs, tutorials, or any web content
+- **Find** pricing pages, login pages, or specific website sections
 - **Understand** what a web page is for (intent, purpose, meaning)
 - **Analyze** page structure semantically (sections, components, hierarchy)
 - **Read** any web content (articles, docs, API docs, blogs)
 - **Fetch** URLs directly without browser (HTML→Markdown conversion)
-- **Search** the web for information (DuckDuckGo integration)
+- **Crawl** websites and build search index
 - **Test** web UIs with semantic understanding
 - **Compare** page versions (diff)
 - **Learn** about websites (memory)
@@ -33,17 +35,16 @@ Use this skill when the user wants to:
 - **Coordinate** multiple agents working on the same page
 - **Heal** broken selectors automatically (8 strategies)
 - **Run** multi-browser sessions with pool management
-- **Capture** network requests/responses for debugging
-- **Monitor** console logs and JS runtime errors
-- **Inject** scripts before page load for testing
-- **Manage** cookies and storage state
-- **Highlight** elements for visual debugging
-- **Extract** content from articles and documentation
-- **Parse** documentation structure and navigation
-- **Stealth** browse without detection
-- **Secure** with domain allowlisting and encryption
-- **Input** with mouse, keyboard, dialogs, frames
-- **Download/Upload** files and export PDFs
+
+## Automatic Behaviors
+
+**Search auto-crawls**: When user asks to search something, `bir_search` automatically crawls relevant documentation sites if the index is empty. No manual crawling needed.
+
+**Examples of natural queries:**
+- "search Next.js documentation" → auto-crawls nextjs.org/docs
+- "find Stripe pricing" → auto-crawls stripe.com/pricing
+- "how to login to GitHub" → auto-crawls github.com/login
+- "React hooks tutorial" → auto-crawls react.dev/learn
 - **Monitor** with real-time dashboard
 
 ## What This Skill Does

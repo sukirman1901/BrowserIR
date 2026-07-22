@@ -718,17 +718,26 @@ export const birAnalyzeContentTool = {
 
 export const searchTool = {
   name: 'bir_search',
-  description: 'Search web pages semantically (like Exa). Understands intent beyond keywords.',
+  description: 'Search and browse the web with semantic understanding. Auto-crawls and indexes pages if needed. Use for finding documentation, pricing, APIs, tutorials, or any web content.',
   inputSchema: {
-    query: z.string().describe('Natural language search query'),
-    domain: z.string().optional().describe('Filter by domain'),
-    intent: z.string().optional().describe('Filter by intent (login, pricing, docs, etc.)'),
+    query: z.string().describe('What to search for (natural language, e.g., "Next.js documentation", "Stripe pricing", "how to login")'),
+    domain: z.string().optional().describe('Filter by specific domain (e.g., "nextjs.org", "stripe.com")'),
+    intent: z.string().optional().describe('Filter by intent: docs, pricing, login, api, tutorial'),
     limit: z.number().optional().describe('Max results (default 10)'),
   },
   handler: async ({ query, domain, intent, limit }: { query: string; domain?: string; intent?: string; limit?: number }) => {
     const exaSearch = await getExaSearch()
-    const results = await exaSearch.search(query, { domain, intent: intent as IntentCategory | undefined, limit })
-    return { results }
+    const results = await exaSearch.search(query, { 
+      domain, 
+      intent: intent as IntentCategory | undefined, 
+      limit,
+      autoCrawl: true  // Auto-crawl if index is empty
+    })
+    return { 
+      query,
+      results,
+      hint: results.length === 0 ? 'No results found. Try crawling specific URLs with bir_crawl.' : undefined
+    }
   },
 }
 
