@@ -113,7 +113,7 @@ describe('SemanticIndexer', () => {
     expect(page!.url).toBe('https://example.com/get')
     expect(page!.title).toBe('Get Me')
     expect(page!.score).toBe(1.0)
-    expect(page!.intent.keywords.length).toBeGreaterThan(0)
+    expect(page!.intent.keywords).toHaveLength(0)
   })
 
   it('should return null for non-existent page', async () => {

@@ -4,17 +4,34 @@
 export class EmbeddingEngine {
   private dimension = 384
   private cache = new Map<string, number[]>()
+  private cacheOrder: string[] = []
+  private maxCacheSize = 10000
 
   async embed(text: string): Promise<number[]> {
     const normalized = text.toLowerCase().trim()
 
     if (this.cache.has(normalized)) {
+      // Move to end (most recently used)
+      const index = this.cacheOrder.indexOf(normalized)
+      if (index > -1) {
+        this.cacheOrder.splice(index, 1)
+      }
+      this.cacheOrder.push(normalized)
       return this.cache.get(normalized)!
     }
 
-    // Generate deterministic embedding from text hash
     const embedding = this.generateHashEmbedding(normalized)
+
+    // Evict if at capacity
+    if (this.cache.size >= this.maxCacheSize) {
+      const oldest = this.cacheOrder.shift()
+      if (oldest) {
+        this.cache.delete(oldest)
+      }
+    }
+
     this.cache.set(normalized, embedding)
+    this.cacheOrder.push(normalized)
 
     return embedding
   }
@@ -103,5 +120,10 @@ export class EmbeddingEngine {
 
   clearCache(): void {
     this.cache.clear()
+    this.cacheOrder = []
+  }
+
+  getCacheSize(): number {
+    return this.cache.size
   }
 }

@@ -9,14 +9,15 @@ interface IndexedPage {
   url: string
   domain: string
   title: string
-  content: string
+  content?: string
+  snippet?: string
   embedding: string
   intent: string
   intent_confidence: number
   ir: string
   indexed_at: number
   last_accessed: number
-  access_count: number
+  access_count?: number
 }
 
 export class SemanticIndexer {
@@ -122,7 +123,7 @@ export class SemanticIndexer {
 
     const queryEmbedding = await this.embeddingEngine.embed(query)
 
-    let sql = 'SELECT * FROM semantic_pages'
+    let sql = 'SELECT id, url, domain, title, SUBSTR(content, 1, 200) as snippet, embedding, intent, intent_confidence, ir, indexed_at, last_accessed FROM semantic_pages'
     const params: any[] = []
     const conditions: string[] = []
 
@@ -149,28 +150,24 @@ export class SemanticIndexer {
     const rows = this.db.prepare(sql).all(...params) as IndexedPage[]
 
     const results: SearchResult[] = []
+    const idsToUpdate: string[] = []
 
     for (const row of rows) {
       const pageEmbedding = JSON.parse(row.embedding) as number[]
       const score = this.embeddingEngine.cosineSimilarity(queryEmbedding, pageEmbedding)
 
       if (score >= minScore) {
-        this.db.prepare(`
-          UPDATE semantic_pages SET last_accessed = ?, access_count = access_count + 1
-          WHERE id = ?
-        `).run(Date.now(), row.id)
-
-        const intentResult = this.intentClassifier.classify(row.title + ' ' + row.content)
+        idsToUpdate.push(row.id)
 
         results.push({
           id: row.id,
           url: row.url,
           title: row.title,
-          snippet: row.content.substring(0, 200),
+          snippet: row.snippet || '',
           score,
           intent: {
             category: row.intent as IntentCategory,
-            keywords: intentResult.keywords,
+            keywords: [],
             confidence: row.intent_confidence
           },
           ir: JSON.parse(row.ir),
@@ -183,6 +180,15 @@ export class SemanticIndexer {
           }
         })
       }
+    }
+
+    if (idsToUpdate.length > 0) {
+      const placeholders = idsToUpdate.map(() => '?').join(',')
+      this.db.prepare(`
+        UPDATE semantic_pages 
+        SET last_accessed = ?, access_count = access_count + 1
+        WHERE id IN (${placeholders})
+      `).run(Date.now(), ...idsToUpdate)
     }
 
     return results
@@ -212,17 +218,15 @@ export class SemanticIndexer {
 
     if (!row) return null
 
-    const intentResult = this.intentClassifier.classify(row.title + ' ' + row.content)
-
     return {
       id: row.id,
       url: row.url,
       title: row.title,
-      snippet: row.content.substring(0, 200),
+      snippet: (row.content || '').substring(0, 200),
       score: 1.0,
       intent: {
         category: row.intent as IntentCategory,
-        keywords: intentResult.keywords,
+        keywords: [],
         confidence: row.intent_confidence
       },
       ir: JSON.parse(row.ir),

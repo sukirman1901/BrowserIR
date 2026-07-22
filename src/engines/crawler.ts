@@ -1,4 +1,4 @@
-import { chromium, type Browser, type Page } from 'playwright'
+import { chromium, type Browser, type BrowserContext, type Page } from 'playwright'
 import type { CrawlRequest, CrawlResult } from '../ir/search-types.js'
 
 export interface CrawlerOptions {
@@ -17,6 +17,7 @@ interface RobotsRule {
 export class WebCrawler {
   private options: Required<CrawlerOptions>
   private browser: Browser | null = null
+  private context: BrowserContext | null = null
   private robotsCache = new Map<string, RobotsRule[]>()
   private lastRequestTime = 0
 
@@ -32,9 +33,16 @@ export class WebCrawler {
 
   async start(): Promise<void> {
     this.browser = await chromium.launch({ headless: true })
+    this.context = await this.browser.newContext({
+      userAgent: this.options.userAgent
+    })
   }
 
   async stop(): Promise<void> {
+    if (this.context) {
+      await this.context.close().catch(() => {})
+      this.context = null
+    }
     if (this.browser) {
       await this.browser.close()
       this.browser = null
@@ -42,7 +50,7 @@ export class WebCrawler {
   }
 
   async crawl(url: string): Promise<CrawlResult> {
-    if (!this.browser) await this.start()
+    if (!this.browser || !this.context) await this.start()
 
     try {
       if (!(await this.canCrawl(url))) {
@@ -59,12 +67,9 @@ export class WebCrawler {
 
       await this.rateLimit()
       
-      const context = await this.browser!.newContext({
-        userAgent: this.options.userAgent
-      })
+      const page = await this.context!.newPage()
+      
       try {
-        const page = await context.newPage()
-        
         await page.goto(url, { 
           waitUntil: 'domcontentloaded',
           timeout: 30000 
@@ -84,7 +89,7 @@ export class WebCrawler {
           status: 'success'
         }
       } finally {
-        await context.close()
+        await page.close()
       }
     } catch (error) {
       return {
@@ -109,9 +114,10 @@ export class WebCrawler {
       discoveredAt: Date.now() 
     }]
     const visited = new Set<string>()
+    let queueIndex = 0
 
-    while (queue.length > 0 && results.length < this.options.maxPages) {
-      const request = queue.shift()!
+    while (queueIndex < queue.length && results.length < this.options.maxPages) {
+      const request = queue[queueIndex++]
       
       if (visited.has(request.url)) continue
       if (request.depth > this.options.maxDepth) continue
