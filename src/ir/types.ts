@@ -311,3 +311,5 @@ export interface Issue {
   severity: 'low' | 'medium' | 'high'
   timestamp: number
 }
+
+export * from './search-types.js'
