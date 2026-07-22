@@ -8,6 +8,7 @@ import { graphCommand } from './commands/graph.js'
 import { diffCommand } from './commands/diff.js'
 import { memoryCommand } from './commands/memory.js'
 import { testCommand } from './commands/test.js'
+import { createSearchCommand } from './commands/search.js'
 
 const program = new Command()
 
@@ -56,5 +57,7 @@ program
   .description('Run E2E tests from JSON file')
   .option('--url <url>', 'Override base URL')
   .action(testCommand)
+
+program.addCommand(createSearchCommand())
 
 program.parse()
