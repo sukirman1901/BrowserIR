@@ -48,11 +48,23 @@
 # Install Node.js 22+
 node --version  # Should be >= 22
 
-# Install BrowserIR
-npm install @browserir/core
+# Install BrowserIR globally (recommended - enables 'bir' CLI command)
+npm install -g .
 
-# Or globally
-npm install -g @browserir/core
+# Or install as dependency
+npm install @browserir/core
+```
+
+### Global Install (Recommended)
+
+Installing globally enables the `bir` CLI command:
+
+```bash
+npm install -g .
+
+# Verify installation
+bir --version
+bir status
 ```
 
 ### Claude Code
@@ -137,13 +149,28 @@ For platforms that don't auto-register the MCP server, add the MCP server to you
 
 ## Quick Start
 
-After installation, verify it works by asking your agent:
+### Option 1: Use with AI Tools (Recommended)
 
+After installation, just ask your AI agent naturally:
+
+> "search Next.js documentation"
 > "analyze https://example.com"
-> "detect flows on this page"
-> "run E2E tests on this page"
+> "find Stripe pricing pages"
 
-The AI will automatically load the right skill and use the MCP tools.
+The AI will automatically use BrowserIR's MCP tools.
+
+### Option 2: Use CLI directly
+
+```bash
+# Search with natural language
+bir search query "Next.js documentation"
+
+# Analyze a page
+bir explain https://example.com
+
+# Check status
+bir status
+```
 
 ### Example Session
 
@@ -210,9 +237,11 @@ Expected: 33 tools listed.
 
 | Tool | Description |
 |------|-------------|
-| `bir_search` | Semantic search with intent understanding (like Exa) |
+| `bir_search` | Search and browse the web. Auto-crawls if index is empty. |
 | `bir_crawl` | Crawl URL and add to search index |
 | `bir_search_stats` | Get search index statistics |
+
+**Note:** `bir_search` automatically crawls relevant documentation sites when the index is empty. No manual crawling needed!
 
 ### Semantic Analysis
 
