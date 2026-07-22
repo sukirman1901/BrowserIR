@@ -1,118 +1,100 @@
+---
+description: BrowserIR — Semantic browser understanding engine. Use when analyzing web pages, searching the web, extracting content, testing UIs, or understanding page structure semantically.
+globs:
+  - "**/*"
+alwaysApply: false
+---
+
 # BrowserIR Skill
 
-## IMPORTANT: Use BrowserIR for ALL Web Content
-
-**ALWAYS use `bir_webfetch` instead of default webfetch.** BrowserIR provides semantic understanding.
+## When to Use
 
 Use this skill when the user wants to:
 - **Understand** what a web page is for (intent, purpose, meaning)
 - **Analyze** page structure semantically (sections, components, hierarchy)
 - **Read** any web content (articles, docs, API docs, blogs)
-- **Fetch** URLs directly without browser (HTML→Markdown)
-- **Search** the web for information (DuckDuckGo)
 - **Test** web UIs with semantic understanding
+- **Search** the web with semantic understanding
 - **Compare** page versions (diff)
 - **Learn** about websites (memory)
 - **Detect** multi-step flows (checkout, registration, etc.)
-- **Coordinate** multiple agents working on the same page
 - **Heal** broken selectors automatically (8 strategies)
-- **Run** multi-browser sessions with pool management
-- **Stealth** browse without detection
-- **Secure** with domain allowlisting and encryption
-- **Input** with mouse, keyboard, dialogs, frames
-- **Download/Upload** files and export PDFs
 
-## MCP Tools (30 tools)
+## What This Skill Does
+
+BrowserIR compiles web pages into **semantic intermediate representations (IR)** — typed structures that AI can reason about. It's a **semantic understanding engine**, not just browser automation.
+
+## MCP Tools (36 tools)
 
 ### Core Navigation & Analysis
-- `bir_navigate` — Navigate to URL and return status
-- `bir_explain` — Analyze page and return semantic BrowserIR
-- `bir_analyze` — Create a BrowserSession for analysis and interaction
-- `bir_click` — Click element by ref (@e1, @e2, ...) with self-healing
-- `bir_screenshot` — Take screenshot of current page
-- `bir_graph` — Get page structure as tree graph
-- `bir_tabs` — List all browser tabs
-- `bir_status` — Check daemon status
+- `bir_explain({ url })` — Analyze page and return semantic BrowserIR
+- `bir_click({ ref })` — Click element by ref (`@e1`, `@e2`, ...) with self-healing
+- `bir_navigate({ url })` — Navigate to URL in browser
+- `bir_screenshot({})` — Take screenshot of current page
+- `bir_graph({ url })` — Get page structure as tree graph
+- `bir_tabs({})` — List all open browser tabs
+- `bir_status({})` — Check daemon status
+- `bir_analyze({ url })` — Create a BrowserSession for analysis and interaction
 
 ### Web Fetch & Search
-- `bir_fetch` — Fetch URL content without browser (HTML→Markdown)
-- `bir_search` — Search web via DuckDuckGo API
-- `bir_read` — Read and extract semantic content from URL
+- `bir_webfetch({ url, format })` — Fetch URL with semantic understanding
+- `bir_websearch({ query, numResults })` — Search web with semantic results
+- `bir_analyze_content({ content, type })` — Analyze text content semantically
+- `bir_search({ query, domain?, intent?, limit? })` — Semantic search with auto-crawl
+- `bir_crawl({ url, depth? })` — Crawl URL and add to search index
+- `bir_search_stats({})` — Get search index statistics
 
 ### Semantic Analysis
-- `bir_flow_detect` — Detect multi-step flows from captured events
-- `bir_flow_list` — List known flows for a domain
-- `bir_diff_compare` — Compare two BrowserIR snapshots semantically
+- `bir_flow_detect({ sessionId })` — Detect multi-step flows from captured events
+- `bir_flow_list({ domain })` — List known flows for a domain
+- `bir_diff_compare({ irBefore, irAfter })` — Compare two BrowserIR snapshots semantically
 
 ### Memory System
-- `bir_memory_recall` — Recall learned knowledge about a domain
-- `bir_memory_store` — Store BrowserIR knowledge about a domain
+- `bir_memory_recall({ domain })` — Recall learned knowledge about a domain
+- `bir_memory_store({ domain, ir })` — Store BrowserIR knowledge about a domain
 
 ### Knowledge Graph
-- `bir_knowledge_add_node` — Add node to knowledge graph
-- `bir_knowledge_add_edge` — Add edge between knowledge nodes
-- `bir_knowledge_search` — Search knowledge graph by label or type
-- `bir_knowledge_traverse` — Traverse graph from starting node
+- `bir_knowledge_add_node({ type, label, properties? })` — Add node to knowledge graph
+- `bir_knowledge_add_edge({ source, target, type, weight? })` — Add edge between nodes
+- `bir_knowledge_search({ query, type? })` — Search knowledge graph
+- `bir_knowledge_traverse({ startId, maxDepth? })` — Traverse graph from starting node
 
 ### Event System
-- `bir_events_capture` — Capture custom event into event stream
-- `bir_events_get` — Query captured events for a session
+- `bir_events_capture({ type, sessionId, data? })` — Capture custom event
+- `bir_events_get({ sessionId, query? })` — Query captured events
 
 ### Planner Engine
-- `bir_planner_create` — Create execution plan for a goal
-- `bir_planner_execute` — Execute a plan by ID
-- `bir_planner_status` — Get status of a plan
+- `bir_planner_create({ goal, domain })` — Create execution plan for a goal
+- `bir_planner_execute({ planId })` — Execute a plan by ID
+- `bir_planner_status({ planId })` — Get status of a plan
 
 ### Self-Healing
-- `bir_heal_find` — Find replacement for broken selector using semantic IR
+- `bir_heal_find({ brokenSelector, ir, intent? })` — Find replacement for broken selector
 
 ### Multi-Browser
-- `bir_multi_create_session` — Create new multi-browser session
-- `bir_multi_execute` — Execute task across multiple tabs
-- `bir_multi_sessions` — List all multi-browser sessions
+- `bir_multi_create_session({})` — Create new multi-browser session
+- `bir_multi_execute({ task })` — Execute task across multiple tabs
+- `bir_multi_sessions({})` — List all multi-browser sessions
 
 ### Agent Coordination
-- `bir_agent_register` — Register agent for coordination
-- `bir_agent_unregister` — Unregister agent
-- `bir_agent_claim` — Claim work on specific action
-- `bir_agent_graph` — Show agent dependency graph
-
-## Quick Start
-
-```bash
-# Start daemon
-bir daemon start
-
-# Analyze a page
-bir explain https://example.com
-
-# Click element by ref
-bir click @e5
-
-# Compare versions
-bir diff compare v1.json v2.json
-```
+- `bir_agent_register({ id, name, role, sessionId })` — Register agent
+- `bir_agent_unregister({ id })` — Unregister agent
+- `bir_agent_claim({ agentId, type, target? })` — Claim work on specific action
+- `bir_agent_graph({})` — Show agent dependency graph
 
 ## Workflow
 
-1. Start daemon: `bir daemon start`
-2. Analyze page: `bir explain <url>`
-3. Interact using refs: `bir click @e5`
-4. Use memory: `bir memory store/recall`
-5. Compare versions: `bir diff compare`
-6. Self-healing: `bir heal.find`
-7. Multi-browser: `bir multi.*`
-8. Agent coordination: `bir agent.*`
+1. Start daemon: `bir daemon start` (auto-started by MCP server)
+2. Analyze page: `bir_explain({ url })`
+3. Interact using refs: `bir_click({ ref: "@e5" })`
+4. Use memory: `bir_memory_store` / `bir_memory_recall`
+5. Compare versions: `bir_diff_compare({ irBefore, irAfter })`
+6. Self-healing: `bir_heal_find({ brokenSelector, ir, intent })`
 
 ## Tips
 
-1. Always start with `bir explain` — get the IR before any action
-2. Use refs, not CSS — `@e5` is deterministic, CSS selectors break
-3. Check intent — understand what the page is for
-4. Check risks — BrowserIR warns about destructive actions
-5. Use memory — store and recall patterns
-6. Use flow — detect multi-step processes
-7. Use diff — compare page versions
-8. Use heal — fix broken selectors automatically
-9. Use multi — test across multiple tabs
-10. Use agent — coordinate multiple AI agents
+1. Always start with `bir_explain` — get the IR before any action
+2. Use refs (`@e5`), not CSS selectors — refs are deterministic
+3. Check intent & risk — understand what the page is for
+4. Use `bir_webfetch` instead of raw fetch — returns semantic data
+5. Use memory — store and recall patterns across sessions

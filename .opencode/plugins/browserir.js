@@ -1,8 +1,9 @@
 /**
  * BrowserIR plugin for OpenCode
  *
- * Injects BrowserIR bootstrap context.
- * Auto-registers skills directory + MCP server.
+ * Injects BrowserIR skill bootstrap context into agent conversations.
+ * MCP server is registered separately in global opencode.json (mcp.bir).
+ * Skill is loaded from .opencode/skills/bir/SKILL.md (auto-discovered).
  */
 
 import path from 'path';
@@ -29,64 +30,30 @@ const extractAndStripFrontmatter = (content) => {
 };
 
 export const BrowserIRPlugin = async ({ client, directory }) => {
-  const skillsDir = path.resolve(__dirname, '../../skills');
-  const opencodeSkillsDir = path.resolve(__dirname, '../skills');
+  const skillPath = path.resolve(__dirname, '../skills/bir/SKILL.md');
 
   const getBootstrapContent = () => {
-    // Try root skills first, then .opencode/skills
-    const skillPaths = [
-      path.join(skillsDir, 'SKILL.md'),
-      path.join(opencodeSkillsDir, 'bir', 'SKILL.md')
-    ];
-    
-    for (const skillPath of skillPaths) {
-      if (fs.existsSync(skillPath)) {
-        const fullContent = fs.readFileSync(skillPath, 'utf8');
-        const { content } = extractAndStripFrontmatter(fullContent);
-        return `<EXTREMELY_IMPORTANT>
+    if (!fs.existsSync(skillPath)) return null;
+    const fullContent = fs.readFileSync(skillPath, 'utf8');
+    const { content } = extractAndStripFrontmatter(fullContent);
+    return `<EXTREMELY_IMPORTANT>
 You have BROWSERIR SEMANTIC UNDERSTANDING.
 
 **IMPORTANT: The BrowserIR skill content is included below. It is ALREADY LOADED - you are currently following it.**
 
 ${content}
 </EXTREMELY_IMPORTANT>`;
-      }
-    }
-    return null;
   };
 
   return {
-    config: async (config) => {
-      // Register skills directory
-      config.skills = config.skills || {};
-      config.skills.paths = config.skills.paths || [];
-      
-      if (!config.skills.paths.includes(skillsDir)) {
-        config.skills.paths.push(skillsDir);
-      }
-      if (!config.skills.paths.includes(opencodeSkillsDir)) {
-        config.skills.paths.push(opencodeSkillsDir);
-      }
-
-      // Register MCP server
-      config.mcp = config.mcp || {};
-      if (!config.mcp.bir) {
-        config.mcp.bir = {
-          type: 'local',
-          command: ['node', 'dist/adapters/mcp/index.js'],
-          cwd: directory,
-          enabled: true,
-        };
-      }
-    },
     'experimental.chat.messages.transform': async (_input, output) => {
       const bootstrap = getBootstrapContent();
       if (!bootstrap || !output.messages.length) return;
-      
+
       const firstUser = output.messages.find(m => m.info.role === 'user');
       if (!firstUser || !firstUser.parts.length) return;
       if (firstUser.parts.some(p => p.type === 'text' && p.text.includes('BROWSERIR SEMANTIC UNDERSTANDING'))) return;
-      
+
       const ref = firstUser.parts[0];
       firstUser.parts.unshift({ ...ref, type: 'text', text: bootstrap });
     },

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "bir": {
+      "command": "node",
+      "args": ["${workspaceFolder}/dist/adapters/mcp/index.js"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
