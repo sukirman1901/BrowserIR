@@ -1,4 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["browserir@git+https://github.com/sukirman1901/BrowserIR.git"]
+  "mcp": {
+    "bir": {
+      "type": "local",
+      "command": ["node", "dist/adapters/mcp/index.js"],
+      "cwd": ".",
+      "enabled": true
+    }
+  }
 }

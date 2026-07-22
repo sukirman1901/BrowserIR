@@ -1,3 +1,8 @@
+---
+name: bir
+description: Semantic browser understanding for AI agents - search, analyze, crawl web pages with BrowserIR
+---
+
 # BrowserIR Skill
 
 ## IMPORTANT: Use BrowserIR for ALL Web Content

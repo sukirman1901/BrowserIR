@@ -1,6 +1,0 @@
-{
-  "name": "browserir",
-  "version": "0.1.0",
-  "description": "Semantic browser understanding engine for AI agents",
-  "plugin": "./plugins/browserir.js"
-}
