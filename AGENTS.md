@@ -12,7 +12,7 @@ Raw HTML → BrowserIR → Semantic Tree (sections, components, intent, flow, ri
 
 **Key insight:** BrowserIR doesn't just "see" the page — it "understands" what the page is for, what actions are available, and what risks exist.
 
-## Core Capabilities (25)
+## Core Capabilities (28)
 
 1. **Semantic Analysis** — 20+ intent categories, 38 component types
 2. **Risk Assessment** — Critical severity, compliance checks (GDPR, PCI, HIPAA, SOC2, CCPA)
@@ -21,12 +21,14 @@ Raw HTML → BrowserIR → Semantic Tree (sections, components, intent, flow, ri
 5. **Content Reading** — Universal reader for articles, docs, API docs, blogs
 6. **Web Fetch** — Fetch URLs directly without browser (HTML→Markdown conversion)
 7. **Web Search** — Search web via DuckDuckGo API
-8. **Stealth** — Anti-detection (webdriver, chrome, permissions, plugins, languages)
-9. **Security** — Domain allowlisting, encryption (AES-256), output truncation
-10. **E2E Testing** — 22 assertion types + HTML/JSON reports
-11. **Memory** — Patterns, selectors, flows, errors, performance + learning
-12. **Multi-Browser** — Pool management, parallel execution, idle cleanup
-13. **Dashboard** — Real-time SSE monitoring (port 4848)
+8. **Semantic Search** — Intent-based search with vector embeddings (like Exa)
+9. **Web Crawling** — BFS crawling with robots.txt, rate limiting
+10. **Stealth** — Anti-detection (webdriver, chrome, permissions, plugins, languages)
+11. **Security** — Domain allowlisting, encryption (AES-256), output truncation
+12. **E2E Testing** — 22 assertion types + HTML/JSON reports
+13. **Memory** — Patterns, selectors, flows, errors, performance + learning
+14. **Multi-Browser** — Pool management, parallel execution, idle cleanup
+15. **Dashboard** — Real-time SSE monitoring (port 4848)
 
 ## Quick Start
 
@@ -56,7 +58,7 @@ bir graph show                 # Show agent dependency graph
 bir status                     # Check daemon status
 ```
 
-### MCP Tools (30 tools)
+### MCP Tools (33 tools)
 Use via MCP integration in Claude, Cursor, OpenCode, etc.
 
 ### MCP Server Configuration
@@ -82,6 +84,11 @@ Use via MCP integration in Claude, Cursor, OpenCode, etc.
 - `bir_graph` — Get page structure as tree graph
 - `bir_tabs` — List all browser tabs
 - `bir_status` — Check daemon status
+
+#### Semantic Search Engine
+- `bir_search` — Semantic search with intent understanding (like Exa)
+- `bir_crawl` — Crawl URL and add to search index
+- `bir_search_stats` — Get search index statistics
 
 #### Semantic Analysis
 - `bir_flow_detect` — Detect multi-step flows from captured events

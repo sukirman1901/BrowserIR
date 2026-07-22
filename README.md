@@ -21,6 +21,7 @@
 - [MCP Tools Reference](#mcp-tools-reference)
   - [Core Navigation & Analysis](#core-navigation--analysis)
   - [Web Fetch & Search](#web-fetch--search)
+  - [Semantic Search Engine](#semantic-search-engine)
   - [Semantic Analysis](#semantic-analysis)
   - [Memory System](#memory-system)
   - [Knowledge Graph](#knowledge-graph)
@@ -32,6 +33,7 @@
 - [CLI Commands](#cli-commands)
 - [Skills Guide](#skills-guide)
 - [Architecture](#architecture)
+- [Search Engine Architecture](#search-engine-architecture)
 - [Troubleshooting](#troubleshooting)
 - [Requirements](#requirements)
 - [License](#license)
@@ -169,7 +171,7 @@ The AI follows a semantic understanding methodology: **Explain → Analyze → I
 
 ## MCP Server Setup
 
-The BrowserIR MCP server provides 30 tools via stdio transport using TypeScript.
+The BrowserIR MCP server provides 33 tools via stdio transport using TypeScript.
 
 ### Verify MCP Server
 
@@ -177,7 +179,7 @@ The BrowserIR MCP server provides 30 tools via stdio transport using TypeScript.
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node dist/adapters/mcp/index.js
 ```
 
-Expected: 30 tools listed.
+Expected: 33 tools listed.
 
 ---
 
@@ -201,8 +203,16 @@ Expected: 30 tools listed.
 | Tool | Description |
 |------|-------------|
 | `bir_fetch` | Fetch URL content without browser (HTML→Markdown) |
-| `bir_search` | Search web via DuckDuckGo API |
+| `bir_search_web` | Search web via DuckDuckGo API |
 | `bir_read` | Read and extract semantic content from URL |
+
+### Semantic Search Engine
+
+| Tool | Description |
+|------|-------------|
+| `bir_search` | Semantic search with intent understanding (like Exa) |
+| `bir_crawl` | Crawl URL and add to search index |
+| `bir_search_stats` | Get search index statistics |
 
 ### Semantic Analysis
 
@@ -271,6 +281,7 @@ Expected: 30 tools listed.
 ## CLI Commands
 
 ```bash
+# Core Commands
 bir explain <url>              # Get semantic IR of a page
 bir click <ref>                # Click element by ref (e.g. @e3) with self-healing
 bir screenshot                 # Take screenshot
@@ -280,6 +291,11 @@ bir test <test-file>           # Run E2E tests from JSON file
 bir memory recall <domain>     # Recall stored domain knowledge
 bir memory store <json>        # Store domain knowledge
 bir status                     # Check daemon status
+
+# Search Engine Commands
+bir search query <text>        # Semantic search with natural language
+bir search crawl <url>         # Crawl URL and add to index
+bir search stats               # Show search index statistics
 ```
 
 ---
@@ -294,6 +310,7 @@ The plugin includes methodology skills that guide the AI through structured brow
 | `bir-testing` | "test", "E2E", "assertion", "verify" |
 | `bir-debugging` | "debug", "error", "console", "network" |
 | `bir-content` | "read", "article", "documentation", "docs" |
+| `bir-search` | "search", "find", "crawl", "index", "pricing", "login" |
 
 Skills load automatically via intent detection. The AI follows the skill's methodology step by step.
 
@@ -313,6 +330,8 @@ Skills load automatically via intent detection. The AI follows the skill's metho
 │            Semantic Understanding Engine             │
 ├─────────────────────────────────────────────────────┤
 │  • explain() → BrowserIR (intent, flow, risk)        │
+│  • search() → Semantic search with intent            │
+│  • crawl() → Web crawling with BFS                   │
 │  • memory → learned patterns                         │
 │  • flow → multi-step detection                       │
 │  • diff → change tracking                            │
@@ -322,6 +341,37 @@ Skills load automatically via intent detection. The AI follows the skill's metho
                         ▼
 ┌─────────────────────────────────────────────────────┐
 │             Browser (Chrome/Firefox/WebKit)          │
+└─────────────────────────────────────────────────────┘
+```
+
+## Search Engine Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  User Query                          │
+│  "find SaaS pricing pages"                          │
+└───────────────────────┬─────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│              Intent Detection                        │
+│  • Category: "pricing"                              │
+│  • Keywords: ["pricing", "plans"]                   │
+└───────────────────────┬─────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│            Semantic Search Engine                     │
+│  • Query Embedding (384 dimensions)                  │
+│  • Cosine Similarity with Indexed Pages              │
+│  • Filter by Intent/Domain                           │
+│  • Rank by Score                                     │
+└───────────────────────┬─────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│              Results                                 │
+│  [                                                   │
+│    { url, title, score, intent, ir },               │
+│    ...                                               │
+│  ]                                                   │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -338,7 +388,7 @@ node dist/adapters/mcp/index.js
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node dist/adapters/mcp/index.js
 ```
 
-Expected output: 30 tools listed.
+Expected output: 33 tools listed.
 
 ### OpenCode plugin not loading
 

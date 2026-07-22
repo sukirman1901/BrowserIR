@@ -50,7 +50,7 @@ Use this skill when the user wants to:
 
 BrowserIR compiles web pages into **semantic intermediate representations (IR)** — typed structures that AI can reason about. It's a **semantic understanding engine**, not just browser automation.
 
-### Key Capabilities (25)
+### Key Capabilities (28)
 
 1. **Semantic Analysis** — Understands page purpose with 20+ intent categories
 2. **Intent Recognition** — Classifies page type (auth, purchase, documentation, tutorial, blog, api, forum, chat, dashboard, settings, profile, checkout, payment, subscription, support, feedback, contact, social, media, download)
@@ -77,6 +77,9 @@ BrowserIR compiles web pages into **semantic intermediate representations (IR)**
 23. **Dashboard** — Real-time semantic analysis monitoring with SSE (port 4848)
 24. **Web Fetch** — Fetch URLs directly without browser (HTML→Markdown conversion)
 25. **Web Search** — Search web via DuckDuckGo API
+26. **Semantic Search** — Intent-based search with vector embeddings (like Exa)
+27. **Web Crawling** — BFS crawling with robots.txt, rate limiting
+28. **Intent Classification** — Understand user queries beyond keywords
 
 ---
 
@@ -88,7 +91,7 @@ BrowserIR provides two distinct interfaces depending on how you interact:
 
 ---
 
-## MCP Tools (30 tools for AI Agents)
+## MCP Tools (33 tools for AI Agents)
 
 ### Core Navigation & Analysis
 | Tool | Description | Input Schema |
@@ -98,6 +101,13 @@ BrowserIR provides two distinct interfaces depending on how you interact:
 | `bir_analyze` | Create a BrowserSession for analysis and interaction | `{ url: string }` |
 | `bir_click` | Click element by ref (`@e1`, `@e2`, ...) with self-healing | `{ ref: string }` |
 | `bir_screenshot` | Take screenshot of current page | `{}` |
+
+### Semantic Search Engine
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_search` | Semantic search with intent understanding | `{ query: string, domain?: string, intent?: string, limit?: number }` |
+| `bir_crawl` | Crawl URL and add to search index | `{ url: string }` |
+| `bir_search_stats` | Get search index statistics | `{}` |
 | `bir_graph` | Get page structure as tree graph | `{ url: string }` |
 | `bir_tabs` | List all open browser tabs | `{}` |
 | `bir_status` | Check daemon status | `{}` |
