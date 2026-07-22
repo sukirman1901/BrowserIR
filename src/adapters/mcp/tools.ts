@@ -5,11 +5,110 @@ import { explain as explainImpl, analyze as analyzeImpl, type BrowserSession } f
 import { ExaSearch } from '../../engines/exa-search.js'
 import { createDatabase } from '../../db/index.js'
 import type { IntentCategory } from '../../ir/search-types.js'
+import { spawn, exec } from 'child_process'
+import { promisify } from 'util'
+import * as path from 'path'
+import * as fs from 'fs'
+
+const execAsync = promisify(exec)
 
 let sharedClient: RPCClient | null = null
 let sessionStarted = false
+let daemonProcess: ReturnType<typeof spawn> | null = null
+
+async function isDaemonRunning(): Promise<boolean> {
+  try {
+    const result = await execAsync('curl -s http://localhost:3081/health')
+    return result.stdout.includes('"status":"healthy"')
+  } catch {
+    return false
+  }
+}
+
+async function startDaemon(): Promise<void> {
+  console.error('[BrowserIR] Starting daemon...')
+  
+  const serverPath = path.join(process.cwd(), 'dist', 'daemon', 'server.js')
+  
+  // Check if server.js exists
+  if (!fs.existsSync(serverPath)) {
+    // Try relative to this file's location
+    const altPath = path.resolve(__dirname, '../../daemon/server.js')
+    if (fs.existsSync(altPath)) {
+      return startDaemonAtPath(altPath)
+    }
+    console.error('[BrowserIR] daemon server.js not found, skipping auto-start')
+    return
+  }
+  
+  return startDaemonAtPath(serverPath)
+}
+
+function startDaemonAtPath(serverPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    daemonProcess = spawn('node', [serverPath], {
+      detached: true,
+      stdio: ['ignore', 'pipe', 'pipe']
+    })
+    
+    let started = false
+    
+    daemonProcess.stdout?.on('data', (data) => {
+      const output = data.toString()
+      console.error('[BrowserIR]', output.trim())
+      
+      if (output.includes('listening') && !started) {
+        started = true
+        // Wait a bit for daemon to fully start
+        setTimeout(resolve, 1000)
+      }
+    })
+    
+    daemonProcess.stderr?.on('data', (data) => {
+      console.error('[BrowserIR]', data.toString().trim())
+    })
+    
+    daemonProcess.on('error', (err) => {
+      console.error('[BrowserIR] Failed to start daemon:', err.message)
+      reject(err)
+    })
+    
+    daemonProcess.on('exit', (code) => {
+      if (!started) {
+        console.error(`[BrowserIR] Daemon exited with code ${code}`)
+      }
+      daemonProcess = null
+    })
+    
+    // Timeout after 5 seconds
+    setTimeout(() => {
+      if (!started) {
+        started = true
+        resolve() // Resolve anyway, daemon might be starting slowly
+      }
+    }, 5000)
+  })
+}
+
+async function ensureDaemon(): Promise<void> {
+  const running = await isDaemonRunning()
+  if (!running) {
+    console.error('[BrowserIR] Daemon not running, starting...')
+    await startDaemon()
+    
+    // Wait and verify
+    await new Promise(r => setTimeout(r, 1000))
+    const verify = await isDaemonRunning()
+    if (!verify) {
+      console.error('[BrowserIR] Warning: Daemon may not have started correctly')
+    }
+  }
+}
 
 async function getClient(): Promise<RPCClient> {
+  // Auto-start daemon if not running
+  await ensureDaemon()
+  
   if (!sharedClient) {
     sharedClient = new RPCClient()
     await sharedClient.connect()

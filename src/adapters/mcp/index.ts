@@ -2,6 +2,9 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { spawn } from 'child_process'
+import * as path from 'path'
+import * as fs from 'fs'
 import {
   explainTool, clickTool, graphTool, screenshotTool,
   memoryRecallTool, memoryStoreTool,
@@ -19,7 +22,68 @@ import {
   searchTool, crawlTool, searchStatsTool,
 } from './tools.js'
 
+async function ensureDaemonRunning(): Promise<void> {
+  // Check if daemon is already running
+  try {
+    const response = await fetch('http://localhost:3081/health')
+    const data = await response.json()
+    if (data.status === 'healthy') {
+      console.error('[BrowserIR] Daemon already running')
+      return
+    }
+  } catch {
+    // Daemon not running
+  }
+
+  console.error('[BrowserIR] Starting daemon...')
+  
+  // Find server.js path
+  let serverPath = path.join(process.cwd(), 'dist', 'daemon', 'server.js')
+  if (!fs.existsSync(serverPath)) {
+    // Try relative to this file
+    serverPath = path.resolve(__dirname, '../../daemon/server.js')
+  }
+  
+  if (!fs.existsSync(serverPath)) {
+    console.error('[BrowserIR] Warning: daemon server.js not found')
+    return
+  }
+
+  const daemon = spawn('node', [serverPath], {
+    detached: true,
+    stdio: ['ignore', 'pipe', 'pipe']
+  })
+
+  daemon.unref()
+
+  // Wait for daemon to start
+  await new Promise<void>((resolve) => {
+    let started = false
+    
+    daemon.stdout?.on('data', (data) => {
+      const output = data.toString()
+      if (output.includes('listening') && !started) {
+        started = true
+        setTimeout(resolve, 500)
+      }
+    })
+    
+    // Timeout after 3 seconds
+    setTimeout(() => {
+      if (!started) {
+        started = true
+        resolve()
+      }
+    }, 3000)
+  })
+
+  console.error('[BrowserIR] Daemon started')
+}
+
 async function main() {
+  // Auto-start daemon
+  await ensureDaemonRunning()
+
   const server = new McpServer({
     name: 'browserir',
     version: '0.1.0',
