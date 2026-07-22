@@ -12,7 +12,7 @@ Raw HTML → BrowserIR → Semantic Tree (sections, components, intent, flow, ri
 
 **Key insight:** BrowserIR doesn't just "see" the page — it "understands" what the page is for, what actions are available, and what risks exist.
 
-## Core Capabilities (28)
+## Core Capabilities (36)
 
 1. **Semantic Analysis** — 20+ intent categories, 38 component types
 2. **Risk Assessment** — Critical severity, compliance checks (GDPR, PCI, HIPAA, SOC2, CCPA)
@@ -58,7 +58,7 @@ bir graph show                 # Show agent dependency graph
 bir status                     # Check daemon status
 ```
 
-### MCP Tools (33 tools)
+### MCP Tools (36 tools)
 Use via MCP integration in Claude, Cursor, OpenCode, etc.
 
 ### MCP Server Configuration
@@ -67,9 +67,8 @@ Use via MCP integration in Claude, Cursor, OpenCode, etc.
 {
   "mcpServers": {
     "bir": {
-      "command": "node",
-      "args": ["dist/adapters/mcp/index.js"],
-      "cwd": "/path/to/bir"
+      "command": ["node", "/path/to/BrowserIR/dist/adapters/mcp/index.js"],
+      "cwd": "/path/to/BrowserIR"
     }
   }
 }
@@ -84,6 +83,11 @@ Use via MCP integration in Claude, Cursor, OpenCode, etc.
 - `bir_graph` — Get page structure as tree graph
 - `bir_tabs` — List all browser tabs
 - `bir_status` — Check daemon status
+
+#### Web Fetch & Search
+- `bir_webfetch` — Fetch URL with semantic understanding (HTML→Markdown)
+- `bir_websearch` — Search web with semantic results
+- `bir_analyze_content` — Analyze text content and return semantic understanding
 
 #### Semantic Search Engine
 - `bir_search` — Semantic search returning BrowserIR with intent, components, actions
@@ -267,42 +271,29 @@ BrowserIR explains WHY it thinks something is what it is:
 BrowserIR integrates with multiple AI platforms:
 
 ### Claude Code
-```bash
-# Plugin location
-.claude-plugin/plugin.json
-
-# Usage
-/plugin bir:explain https://example.com
+```
+.claude-plugin/plugin.json   # Plugin manifest
+.mcp.json                    # MCP server config (uses ${CLAUDE_PROJECT_DIR})
+skills/bir/SKILL.md          # Plugin skill
 ```
 
 ### OpenCode
-```bash
-# Skill location
-.opencode/skills/bir/SKILL.md
-
-# Usage
-skill({ name: "bir" })
+```
+.opencode/skills/bir/SKILL.md   # Skill (auto-discovered)
+.opencode/agents/browserir.md   # Subagent (mode: subagent)
+.opencode/plugins/browserir.js  # Plugin (skill injection)
+# MCP registered in global ~/.config/opencode/opencode.json
 ```
 
 ### Cursor
-```bash
-# Rules location
-.cursor/rules/bir.mdc
-
-# Auto-loaded when using BrowserIR tools
+```
+.cursor/rules/bir.mdc    # Rule with MCP tool docs
+.cursor/mcp.json         # MCP server config (uses ${workspaceFolder})
 ```
 
-### All Platforms
-```bash
-# MCP server configuration
-{
-  "mcpServers": {
-    "bir": {
-      "command": "node",
-      "args": ["dist/adapters/mcp/index.js"]
-    }
-  }
-}
+### Cross-Platform
+```
+.agents/skills/bir/SKILL.md   # Agent-compatible skill
 ```
 
 ## Architecture

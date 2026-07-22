@@ -92,11 +92,21 @@ Create or edit `.mcp.json` in your project root:
 
 ### Cursor
 
-- In Cursor Agent chat, install from marketplace:
-  ```
-  /add-plugin browserir
-  ```
-- Or search for "browserir" in the plugin marketplace.
+Create `.cursor/mcp.json` in your project root (or use the included one):
+
+```json
+{
+  "mcpServers": {
+    "bir": {
+      "command": "node",
+      "args": ["${workspaceFolder}/dist/adapters/mcp/index.js"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
+```
+
+The `.cursor/rules/bir.mdc` file auto-loads BrowserIR context when using Cursor Agent.
 
 ### Codex
 
@@ -118,17 +128,22 @@ Search for BrowserIR and select `Install Plugin`.
 
 ### OpenCode
 
-OpenCode uses its own plugin install. The plugin auto-registers the MCP server and all skills — no manual MCP config needed.
-
-Add to your `opencode.json`:
+Add the MCP server to your global `~/.config/opencode/opencode.json`:
 
 ```json
 {
-  "plugin": ["browserir@git+https://github.com/sukirman1901/BrowserIR.git"]
+  "mcp": {
+    "bir": {
+      "type": "local",
+      "command": ["node", "/path/to/BrowserIR/dist/adapters/mcp/index.cjs"],
+      "cwd": "/path/to/BrowserIR",
+      "enabled": true
+    }
+  }
 }
 ```
 
-Restart OpenCode. The plugin auto-registers the MCP server, skills directory, and bootstrap context.
+Skills and agent are auto-discovered from `.opencode/skills/bir/SKILL.md` and `.opencode/agents/browserir.md`.
 
 ### Manual MCP Config
 
@@ -198,7 +213,7 @@ The AI follows a semantic understanding methodology: **Explain → Analyze → I
 
 ## MCP Server Setup
 
-The BrowserIR MCP server provides 33 tools via stdio transport using TypeScript.
+The BrowserIR MCP server provides 36 tools via stdio transport using TypeScript.
 
 ### Verify MCP Server
 
@@ -206,7 +221,7 @@ The BrowserIR MCP server provides 33 tools via stdio transport using TypeScript.
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node dist/adapters/mcp/index.js
 ```
 
-Expected: 33 tools listed.
+Expected: 36 tools listed.
 
 ---
 
@@ -229,9 +244,9 @@ Expected: 33 tools listed.
 
 | Tool | Description |
 |------|-------------|
-| `bir_fetch` | Fetch URL content without browser (HTML→Markdown) |
-| `bir_search_web` | Search web via DuckDuckGo API |
-| `bir_read` | Read and extract semantic content from URL |
+| `bir_webfetch` | Fetch URL with semantic understanding (HTML→Markdown) |
+| `bir_websearch` | Search web with semantic results |
+| `bir_analyze_content` | Analyze text content and return semantic understanding |
 
 ### Semantic Search Engine
 
@@ -336,17 +351,13 @@ bir search stats               # Show search index statistics
 
 ## Skills Guide
 
-The plugin includes methodology skills that guide the AI through structured browser analysis:
+The `bir` skill guides the AI through structured browser analysis. It auto-loads when the AI detects browser-related intent.
 
 | Skill | Triggers When User Says... |
 |-------|---------------------------|
-| `bir` | "analyze", "explain", "understand", "browser" |
-| `bir-testing` | "test", "E2E", "assertion", "verify" |
-| `bir-debugging` | "debug", "error", "console", "network" |
-| `bir-content` | "read", "article", "documentation", "docs" |
-| `bir-search` | "search", "find", "crawl", "index", "pricing", "login" |
+| `bir` | "analyze", "explain", "understand", "browser", "search", "fetch", "crawl" |
 
-Skills load automatically via intent detection. The AI follows the skill's methodology step by step.
+Skills load on-demand via the platform's skill system. The AI follows the skill's methodology step by step.
 
 ---
 
@@ -422,7 +433,7 @@ node dist/adapters/mcp/index.js
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node dist/adapters/mcp/index.js
 ```
 
-Expected output: 33 tools listed.
+Expected output: 36 tools listed.
 
 ### OpenCode plugin not loading
 

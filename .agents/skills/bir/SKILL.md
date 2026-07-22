@@ -96,26 +96,33 @@ BrowserIR provides two distinct interfaces depending on how you interact:
 
 ---
 
-## MCP Tools (33 tools for AI Agents)
+## MCP Tools (36 tools for AI Agents)
 
 ### Core Navigation & Analysis
 | Tool | Description | Input Schema |
 |------|-------------|--------------|
 | `bir_navigate` | Navigate to URL in browser | `{ url: string }` |
 | `bir_explain` | Analyze page and return semantic BrowserIR | `{ url: string }` |
-
-### Semantic Search Engine
-| Tool | Description | Input Schema |
-|------|-------------|--------------|
-| `bir_search` | Semantic search returning BrowserIR. Auto-crawls if index empty. | `{ query: string, domain?: string, intent?: string, limit?: number }` |
-| `bir_crawl` | Crawl URL and add to search index | `{ url: string }` |
-| `bir_search_stats` | Get search index statistics | `{}` |
 | `bir_analyze` | Create a BrowserSession for analysis and interaction | `{ url: string }` |
 | `bir_click` | Click element by ref (`@e1`, `@e2`, ...) with self-healing | `{ ref: string }` |
 | `bir_screenshot` | Take screenshot of current page | `{}` |
 | `bir_graph` | Get page structure as tree graph | `{ url: string }` |
 | `bir_tabs` | List all open browser tabs | `{}` |
 | `bir_status` | Check daemon status | `{}` |
+
+### Web Fetch & Search
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_webfetch` | Fetch URL with semantic understanding (HTML→Markdown) | `{ url: string, format?: string }` |
+| `bir_websearch` | Search web with semantic results | `{ query: string, numResults?: number }` |
+| `bir_analyze_content` | Analyze text content and return semantic understanding | `{ content: string, type?: string }` |
+
+### Semantic Search Engine
+| Tool | Description | Input Schema |
+|------|-------------|--------------|
+| `bir_search` | Semantic search returning BrowserIR. Auto-crawls if index empty. | `{ query: string, domain?: string, intent?: string, limit?: number }` |
+| `bir_crawl` | Crawl URL and add to search index | `{ url: string, depth?: number }` |
+| `bir_search_stats` | Get search index statistics | `{}` |
 
 ### Semantic Analysis
 | Tool | Description | Input Schema |
@@ -250,15 +257,16 @@ bir_agent_graph()
 
 ## Tips & Best Practices
 
-1. **Always start with `bir_explain` / `bir explain`** — Dapatkan IR sebelum bertindak.
-2. **Gunakan Ref (`@e5`), Bukan CSS Selector** — Ref bersifat deterministik dan tahan perubahan UI.
-3. **Cek Intent & Risk** — Pahami risiko sebelum mengeksekusi tombol sensitif (seperti hapus data / checkout).
-4. **Gunakan Memory & Flow** — Manfaatkan sistem memori untuk mengenali pola alur web yang sering dikunjungi.
+1. **Always start with `bir_explain`** — Get IR before acting.
+2. **Use refs (`@e5`), not CSS selectors** — Refs are deterministic and survive UI changes.
+3. **Check intent & risk** — Understand risks before executing sensitive actions (delete/checkout).
+4. **Use memory & flow** — Leverage memory system to recognize recurring web patterns.
+5. **Use `bir_webfetch` instead of raw fetch** — Returns semantic data with intent and components.
 
 ---
 
 ## Troubleshooting
 
-- **Daemon belum berjalan**: Jalankan `node dist/daemon/server.js` atau `bir daemon start`.
-- **Ref tidak ditemukan**: Jalankan `bir_explain` ulang untuk memperbarui daftar ref komponen yang baru dirender.
-- **Selector lama rusak**: Gunakan `bir_heal_find` untuk mendapatkan selector pengganti yang sesuai intent.
+- **Daemon not running**: Run `node dist/daemon/server.js` or `bir daemon start`.
+- **Ref not found**: Re-run `bir_explain` to refresh component refs.
+- **Broken selector**: Use `bir_heal_find` to find replacement matching intent.
