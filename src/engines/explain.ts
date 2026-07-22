@@ -54,6 +54,7 @@ export class ExplainEngine {
               states: (n.properties || []).map((p: any) => p.name),
               childIds: n.childIds || [],
               children: [],
+              backendDOMNodeId: n.backendDOMNodeId,
             })
           }
           for (const node of nodeMap.values()) {

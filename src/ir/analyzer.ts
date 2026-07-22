@@ -36,6 +36,7 @@ interface A11yNode {
   description?: string
   states: string[]
   children: A11yNode[]
+  backendDOMNodeId?: number
 }
 
 // Analyzer options
@@ -407,6 +408,7 @@ export class SemanticAnalyzer {
       state,
       confidence: calculateConfidence([evidence]),
       evidence: [evidence],
+      backendNodeId: node.backendDOMNodeId,
     }
   }
 

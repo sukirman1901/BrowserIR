@@ -51,6 +51,7 @@ export interface ComponentIR {
   state: ComponentState
   confidence: number
   evidence: Evidence[]
+  backendNodeId?: number
 }
 
 export type ComponentType =
