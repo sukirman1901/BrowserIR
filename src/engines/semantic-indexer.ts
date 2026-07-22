@@ -61,7 +61,12 @@ export class SemanticIndexer {
     ir: any
   }): Promise<string> {
     const id = randomUUID()
-    const domain = new URL(page.url).hostname
+    let domain: string
+    try {
+      domain = new URL(page.url).hostname
+    } catch {
+      throw new Error(`Invalid URL: ${page.url}`)
+    }
     const now = Date.now()
 
     const textToEmbed = `${page.title} ${page.content}`
@@ -113,7 +118,7 @@ export class SemanticIndexer {
   }
 
   async search(query: string, options: SearchFilters & { limit?: number } = {}): Promise<SearchResult[]> {
-    const { limit = 10, domain, intent, minScore = 0.1 } = options
+    const { limit = 10, domain, intent, minScore = 0.1, maxAge } = options
 
     const queryEmbedding = await this.embeddingEngine.embed(query)
 
@@ -129,6 +134,12 @@ export class SemanticIndexer {
     if (intent) {
       conditions.push('intent = ?')
       params.push(intent)
+    }
+
+    if (maxAge) {
+      const cutoff = Date.now() - maxAge * 24 * 60 * 60 * 1000
+      conditions.push('indexed_at >= ?')
+      params.push(cutoff)
     }
 
     if (conditions.length > 0) {
@@ -149,6 +160,8 @@ export class SemanticIndexer {
           WHERE id = ?
         `).run(Date.now(), row.id)
 
+        const intentResult = this.intentClassifier.classify(row.title + ' ' + row.content)
+
         results.push({
           id: row.id,
           url: row.url,
@@ -157,7 +170,7 @@ export class SemanticIndexer {
           score,
           intent: {
             category: row.intent as IntentCategory,
-            keywords: [],
+            keywords: intentResult.keywords,
             confidence: row.intent_confidence
           },
           ir: JSON.parse(row.ir),
@@ -199,6 +212,8 @@ export class SemanticIndexer {
 
     if (!row) return null
 
+    const intentResult = this.intentClassifier.classify(row.title + ' ' + row.content)
+
     return {
       id: row.id,
       url: row.url,
@@ -207,7 +222,7 @@ export class SemanticIndexer {
       score: 1.0,
       intent: {
         category: row.intent as IntentCategory,
-        keywords: [],
+        keywords: intentResult.keywords,
         confidence: row.intent_confidence
       },
       ir: JSON.parse(row.ir),

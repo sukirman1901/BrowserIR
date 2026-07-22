@@ -1,19 +1,4 @@
 {
-  "name": "browserir",
-  "version": "0.1.0",
-  "description": "Semantic browser understanding engine for AI agents",
-  "mcp": {
-    "bir": {
-      "command": "node",
-      "args": ["dist/adapters/mcp/index.js"],
-      "cwd": "."
-    }
-  },
-  "skills": [
-    {
-      "name": "bir",
-      "path": ".opencode/skills/bir/SKILL.md",
-      "description": "BrowserIR semantic browser understanding for AI agents"
-    }
-  ]
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["browserir@git+https://github.com/sukirman1901/BrowserIR.git"]
 }

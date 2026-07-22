@@ -75,4 +75,41 @@ describe('ExaSearch', () => {
     // For test, we just verify the API exists
     expect(typeof search.crawlAndIndex).toBe('function')
   })
+
+  it('should delete a page', async () => {
+    await search.indexPage({
+      url: 'https://example.com/page',
+      title: 'Test Page',
+      content: 'Test content',
+      ir: {}
+    })
+
+    const deleted = await search.deletePage('https://example.com/page')
+    expect(deleted).toBe(true)
+
+    const page = await search.getPage('https://example.com/page')
+    expect(page).toBeNull()
+  })
+
+  it('should get a page by URL', async () => {
+    await search.indexPage({
+      url: 'https://example.com/page',
+      title: 'Test Page',
+      content: 'Test content',
+      ir: {}
+    })
+
+    const page = await search.getPage('https://example.com/page')
+    expect(page).not.toBeNull()
+    expect(page!.url).toBe('https://example.com/page')
+  })
+
+  it('should return null for non-existent page', async () => {
+    const page = await search.getPage('https://example.com/missing')
+    expect(page).toBeNull()
+  })
+
+  it('should expose stop method', () => {
+    expect(typeof search.stop).toBe('function')
+  })
 })

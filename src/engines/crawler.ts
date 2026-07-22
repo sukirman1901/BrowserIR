@@ -45,32 +45,46 @@ export class WebCrawler {
     if (!this.browser) await this.start()
 
     try {
+      if (!(await this.canCrawl(url))) {
+        return {
+          url,
+          title: '',
+          content: '',
+          links: [],
+          ir: {},
+          crawledAt: Date.now(),
+          status: 'skipped'
+        }
+      }
+
       await this.rateLimit()
       
       const context = await this.browser!.newContext({
         userAgent: this.options.userAgent
       })
-      const page = await context.newPage()
-      
-      await page.goto(url, { 
-        waitUntil: 'domcontentloaded',
-        timeout: 30000 
-      })
+      try {
+        const page = await context.newPage()
+        
+        await page.goto(url, { 
+          waitUntil: 'domcontentloaded',
+          timeout: 30000 
+        })
 
-      const title = await page.title()
-      const content = await page.evaluate(() => document.body.innerText)
-      const links = await this.extractLinks(page, url)
+        const title = await page.title()
+        const content = await page.evaluate(() => document.body.innerText)
+        const links = await this.extractLinks(page, url)
 
-      await context.close()
-
-      return {
-        url,
-        title,
-        content,
-        links,
-        ir: {},
-        crawledAt: Date.now(),
-        status: 'success'
+        return {
+          url,
+          title,
+          content,
+          links,
+          ir: {},
+          crawledAt: Date.now(),
+          status: 'success'
+        }
+      } finally {
+        await context.close()
       }
     } catch (error) {
       return {
@@ -124,7 +138,7 @@ export class WebCrawler {
     return results
   }
 
-  private async extractLinks(page: Page, baseUrl: string): Promise<string[]> {
+  async extractLinks(page: Page, baseUrl: string): Promise<string[]> {
     const base = new URL(baseUrl)
     
     return page.evaluate((hostname) => {
@@ -166,9 +180,10 @@ export class WebCrawler {
     return true
   }
 
-  private async fetchRobots(robotsUrl: string): Promise<void> {
+  async fetchRobots(robotsUrl: string): Promise<void> {
     try {
       const response = await fetch(robotsUrl)
+      if (!response.ok) return
       const text = await response.text()
       
       const rules: RobotsRule[] = []
@@ -201,7 +216,7 @@ export class WebCrawler {
     }
   }
 
-  private async rateLimit(): Promise<void> {
+  async rateLimit(): Promise<void> {
     const now = Date.now()
     const elapsed = now - this.lastRequestTime
     

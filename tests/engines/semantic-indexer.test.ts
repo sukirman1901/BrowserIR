@@ -166,7 +166,7 @@ describe('SemanticIndexer', () => {
     })
 
     db.prepare('UPDATE semantic_pages SET indexed_at = ? WHERE url = ?')
-      .run(Date.now() - 365 * 24 * 60 * 60 * 1000, 'https://example.com/old')
+      .run(Date.now() - 300 * 24 * 60 * 60 * 1000, 'https://example.com/old')
 
     const resultsNew = await indexer.search('page', { maxAge: 365 })
     expect(resultsNew.length).toBe(1)

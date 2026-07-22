@@ -14,45 +14,54 @@ export function createSearchCommand(): Command {
     .option('-l, --limit <number>', 'Max results', '10')
     .action(async (text, options) => {
       const db = new Database('bir-search.db')
-      const exaSearch = new ExaSearch(db)
-      
-      const results = await exaSearch.search(text, {
-        domain: options.domain,
-        intent: options.intent,
-        limit: parseInt(options.limit)
-      })
+      try {
+        const exaSearch = new ExaSearch(db)
+        
+        const results = await exaSearch.search(text, {
+          domain: options.domain,
+          intent: options.intent,
+          limit: parseInt(options.limit)
+        })
 
-      console.log(`\nFound ${results.length} results:\n`)
-      for (const result of results) {
-        console.log(`  ${result.score.toFixed(2)} | ${result.title}`)
-        console.log(`        ${result.url}`)
-        console.log(`        Intent: ${result.intent.category}`)
-        console.log('')
+        console.log(`\nFound ${results.length} results:\n`)
+        for (const result of results) {
+          console.log(`  ${result.score.toFixed(2)} | ${result.title}`)
+          console.log(`        ${result.url}`)
+          console.log(`        Intent: ${result.intent.category}`)
+          console.log('')
+        }
+      } catch (err) {
+        console.error('Error:', err instanceof Error ? err.message : err)
+        process.exit(1)
+      } finally {
+        db.close()
       }
-
-      db.close()
     })
 
   search
     .command('crawl <url>')
     .description('Crawl URL and add to index')
-    .option('--depth <number>', 'Crawl depth', '2')
-    .action(async (url, options) => {
+    .action(async (url) => {
       const db = new Database('bir-search.db')
-      const exaSearch = new ExaSearch(db)
-      
-      console.log(`Crawling ${url}...`)
-      const result = await exaSearch.crawlAndIndex(url)
-      
-      if (result) {
-        console.log(`\nIndexed: ${result.title}`)
-        console.log(`URL: ${result.url}`)
-        console.log(`Intent: ${result.intent.category}`)
-      } else {
-        console.log('Failed to crawl URL')
+      try {
+        const exaSearch = new ExaSearch(db)
+        
+        console.log(`Crawling ${url}...`)
+        const result = await exaSearch.crawlAndIndex(url)
+        
+        if (result) {
+          console.log(`\nIndexed: ${result.title}`)
+          console.log(`URL: ${result.url}`)
+          console.log(`Intent: ${result.intent.category}`)
+        } else {
+          console.log('Failed to crawl URL')
+        }
+      } catch (err) {
+        console.error('Error:', err instanceof Error ? err.message : err)
+        process.exit(1)
+      } finally {
+        db.close()
       }
-
-      db.close()
     })
 
   search
@@ -60,14 +69,20 @@ export function createSearchCommand(): Command {
     .description('Show search index statistics')
     .action(async () => {
       const db = new Database('bir-search.db')
-      const exaSearch = new ExaSearch(db)
-      
-      const stats = await exaSearch.getStats()
-      console.log('\nSearch Index Stats:')
-      console.log(`  Total Pages: ${stats.totalPages}`)
-      console.log(`  Total Domains: ${stats.totalDomains}`)
-
-      db.close()
+      try {
+        const exaSearch = new ExaSearch(db)
+        
+        const stats = await exaSearch.getStats()
+        console.log('\nSearch Index Stats:')
+        console.log(`  Total Pages: ${stats.totalPages}`)
+        console.log(`  Total Domains: ${stats.totalDomains}`)
+        console.log(`  Last Indexed: ${new Date(stats.lastIndexed).toISOString()}`)
+      } catch (err) {
+        console.error('Error:', err instanceof Error ? err.message : err)
+        process.exit(1)
+      } finally {
+        db.close()
+      }
     })
 
   return search
